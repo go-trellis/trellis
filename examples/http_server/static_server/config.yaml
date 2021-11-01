@@ -1,0 +1,19 @@
+project:
+  services:
+    trellis-static:
+      name: trellis-server-static
+      version: v1
+      options:
+        http:
+          address: ":8080"
+          path:
+            static_1:
+              static: "/"
+              redirect: "/v1/"
+              root: "./root/v1/"
+            static_2:
+              static: "/v2"
+              redirect: ""
+              root: "./root/v2/"
+        gin_mode: debug
+
