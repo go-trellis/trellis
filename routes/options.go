@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package routes
 
 import (
-	"trellis.tech/go-trellis/common.v0/logger"
 	"trellis.tech/trellis.v0/service/component"
+	"trellis.tech/trellis/common.v0/logger"
 )
 
 type Option func(*Options)

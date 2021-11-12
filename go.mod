@@ -6,8 +6,8 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/gzip v0.0.3
 	github.com/gin-contrib/pprof v1.3.0
-	github.com/gin-gonic/gin v1.6.3
-	github.com/go-resty/resty/v2 v2.6.0
+	github.com/gin-gonic/gin v1.7.4
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
@@ -16,7 +16,7 @@ require (
 	go.etcd.io/etcd/api/v3 v3.5.1
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.uber.org/zap v1.19.1
-	google.golang.org/grpc v1.41.0
-	trellis.tech/go-trellis/common.v0 v0.0.0-20211031021750-6177732dbaa3
+	google.golang.org/grpc v1.42.0
+	trellis.tech/trellis/common.v0 v0.0.0-20211109154714-42221d277605
 	xorm.io/xorm v1.2.5
 )

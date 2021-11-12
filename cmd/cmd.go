@@ -25,16 +25,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	"trellis.tech/go-trellis/common.v0/builder"
-	"trellis.tech/go-trellis/common.v0/config"
-	"trellis.tech/go-trellis/common.v0/logger"
-	"trellis.tech/go-trellis/common.v0/node"
 	"trellis.tech/trellis.v0/configure"
 	"trellis.tech/trellis.v0/routes"
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/component"
 	"trellis.tech/trellis.v0/service/registry"
 	"trellis.tech/trellis.v0/version"
+	"trellis.tech/trellis/common.v0/builder"
+	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v0/node"
 
 	"github.com/urfave/cli/v2"
 )

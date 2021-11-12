@@ -25,9 +25,9 @@ import (
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"trellis.tech/go-trellis/common.v0/config"
 	tnet "trellis.tech/trellis.v0/internal/net"
 	"trellis.tech/trellis.v0/service"
+	"trellis.tech/trellis/common.v0/config"
 )
 
 type Handler struct {

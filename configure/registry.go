@@ -20,8 +20,8 @@ package configure
 import (
 	"time"
 
-	"trellis.tech/go-trellis/common.v0/config"
 	"trellis.tech/trellis.v0/service"
+	"trellis.tech/trellis/common.v0/config"
 )
 
 // Registry registry

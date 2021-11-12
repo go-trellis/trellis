@@ -21,7 +21,7 @@ import (
 	"errors"
 	"strings"
 
-	"trellis.tech/go-trellis/common.v0/crypto/hash"
+	"trellis.tech/trellis/common.v0/crypto/hash"
 )
 
 const (

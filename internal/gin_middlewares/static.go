@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"trellis.tech/go-trellis/common.v0/logger"
 	"trellis.tech/trellis.v0/service"
+	"trellis.tech/trellis/common.v0/logger"
 )
 
 // StatFunc log request & response

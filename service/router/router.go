@@ -18,9 +18,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package router
 
 import (
-	"trellis.tech/go-trellis/common.v0/node"
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/registry"
+	"trellis.tech/trellis/common.v0/node"
 )
 
 // Router service router

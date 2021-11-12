@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"reflect"
 
-	"trellis.tech/go-trellis/common.v0/logger"
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/component"
 	"trellis.tech/trellis.v0/service/message"
+	"trellis.tech/trellis/common.v0/logger"
 )
 
 // Manager routes manager

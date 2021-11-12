@@ -26,12 +26,12 @@ import (
 	"sync"
 	"time"
 
-	"trellis.tech/go-trellis/common.v0/crypto/base64"
-	"trellis.tech/go-trellis/common.v0/errcode"
-	"trellis.tech/go-trellis/common.v0/json"
-	"trellis.tech/go-trellis/common.v0/node"
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/registry"
+	"trellis.tech/trellis/common.v0/crypto/base64"
+	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v0/json"
+	"trellis.tech/trellis/common.v0/node"
 
 	"github.com/google/uuid"
 	"github.com/mitchellh/hashstructure/v2"

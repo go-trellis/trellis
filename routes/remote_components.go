@@ -23,14 +23,14 @@ import (
 	"sync"
 
 	"github.com/go-resty/resty/v2"
-	"trellis.tech/go-trellis/common.v0/json"
-	"trellis.tech/go-trellis/common.v0/node"
 	"trellis.tech/trellis.v0/server"
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/client/grpc"
 	"trellis.tech/trellis.v0/service/component"
 	"trellis.tech/trellis.v0/service/message"
 	"trellis.tech/trellis.v0/service/registry"
+	"trellis.tech/trellis/common.v0/json"
+	"trellis.tech/trellis/common.v0/node"
 )
 
 type RemoteComponent interface {

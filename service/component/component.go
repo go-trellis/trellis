@@ -18,10 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package component
 
 import (
-	"trellis.tech/go-trellis/common.v0/config"
-	"trellis.tech/go-trellis/common.v0/logger"
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/message"
+	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v0/logger"
 )
 
 // NewComponentFunc 服务对象生成函数申明

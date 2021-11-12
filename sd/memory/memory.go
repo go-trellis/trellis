@@ -25,7 +25,7 @@ import (
 	"trellis.tech/trellis.v0/service/registry"
 
 	"github.com/google/uuid"
-	"trellis.tech/go-trellis/common.v0/node"
+	"trellis.tech/trellis/common.v0/node"
 )
 
 var (

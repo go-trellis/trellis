@@ -22,8 +22,8 @@ import (
 	"crypto/tls"
 	"time"
 
-	"trellis.tech/go-trellis/common.v0/logger"
 	"trellis.tech/trellis.v0/service"
+	"trellis.tech/trellis/common.v0/logger"
 )
 
 // Option initial options' functions

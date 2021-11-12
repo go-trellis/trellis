@@ -22,12 +22,12 @@ import (
 	"log"
 	"os"
 
-	"trellis.tech/go-trellis/common.v0/logger"
 	"trellis.tech/trellis.v0/cmd"
 	"trellis.tech/trellis.v0/configure"
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/component"
 	"trellis.tech/trellis.v0/service/message"
+	"trellis.tech/trellis/common.v0/logger"
 )
 
 var s = service.Service{Name: "command_example", Version: "v1"}
