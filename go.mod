@@ -17,6 +17,6 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.1
 	go.uber.org/zap v1.19.1
 	google.golang.org/grpc v1.42.0
-	trellis.tech/trellis/common.v0 v0.0.0-20211109154714-42221d277605
+	trellis.tech/trellis/common.v0 v0.0.0-20211112065430-6cc31f909a47
 	xorm.io/xorm v1.2.5
 )

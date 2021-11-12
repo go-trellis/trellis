@@ -17,8 +17,8 @@ project:
     component_ping:
       name: component_ping
       version: v1
-    trellis-server-http:
-      name: trellis-server-http
+    trellis-postapi:
+      name: trellis-postapi
       version: v1
       options:
         gin_mode: debug
@@ -31,3 +31,10 @@ project:
             authorization: "test" ## default no need header: Authorization
             prefix: / ## default /
           # cors:
+        apis:
+          file:
+            test:
+              api: test
+              topic: ping
+              service_name: component_ping
+              service_version: v1

@@ -24,6 +24,7 @@ import (
 	"trellis.tech/trellis.v0/service"
 
 	"trellis.tech/trellis.v0/examples/components"
+	_ "trellis.tech/trellis.v0/server/api"
 	_ "trellis.tech/trellis.v0/server/http"
 )
 
