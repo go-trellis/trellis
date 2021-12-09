@@ -2,23 +2,28 @@ syntax = "proto3";
 
 package message;
 
-option go_package = "trellis.tech/trellis.v0/service/message;message";
+option go_package = "trellis.tech/trellis.v1/pkg/message;message";
 
-import "service.proto";
+import "trellis.tech/trellis.v1/proto/service.proto";
 
 message Request {
-    string id = 1;
-    service.Service service = 2;
-    string endpoint = 3;
-    Payload payload = 4;
+    service.Service service = 1;
+    // Request payload
+    Payload payload = 3;
 }
 
 message Response {
-  bytes body = 1;
-  map<string, string> header = 2;
+    // @gotags: json:"code"
+    int64 code     = 1;
+    string err_msg = 2;
+    // Response payload @gotags: json:"payload"
+    Payload payload = 3;
 }
 
 message Payload {
-  map<string, string> header = 2;
-  bytes body = 3;
+    // API Handler name
+    string topic = 1;
+
+    map<string, string> header = 2;
+    bytes body                 = 3;
 }

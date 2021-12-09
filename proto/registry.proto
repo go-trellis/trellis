@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package service;
+
+option go_package = "trellis.tech/trellis.v1/pkg/registry;registry";
+
+enum RegisterType {
+    memory = 0;
+    etcd   = 1;
+}

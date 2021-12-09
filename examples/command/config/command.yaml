@@ -1,7 +1,0 @@
-project:
-  logger:
-    level: 1
-  services:
-    command_example:
-      name: command_example
-      version: v1

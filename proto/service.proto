@@ -2,31 +2,26 @@ syntax = "proto3";
 
 package service;
 
-option go_package = "trellis.tech/trellis.v0/service;service";
+option go_package = "trellis.tech/trellis.v1/pkg/service;service";
+
+import "trellis.tech/trellis.v1/proto/node.proto";
 
 message Service {
+    // @gotags: yaml:"domain"
     string domain = 1;
+    // @gotags: yaml:"name"
     string name = 2;
+    // @gotags: yaml:"version"
     string version = 3;
-    string topic = 4;
+}
+
+message ServiceNode {
+    Service service = 1;
+    node.Node node  = 2;
 }
 
 enum EventType {
     create = 0;
     delete = 1;
     update = 2;
-}
-
-enum RegisterType {
-    memory = 0;
-    etcd   = 1;
-}
-
-enum Protocol {
-    LOCAL = 0;
-    GRPC = 1;
-    HTTP = 2;
-    QUIC = 3;
-    UDP  = 4;
-    TCP  = 5;
 }
