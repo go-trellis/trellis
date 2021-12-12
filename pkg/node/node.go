@@ -46,8 +46,8 @@ type Manager interface {
 	NodeFor(keys ...string) (*Node, bool)
 	// Remove removes all nodes from the node ring.
 	Remove()
-	// RemoveByID removes a node from the node ring.
-	RemoveByID(id string)
+	// RemoveByValue removes a node from the node ring.
+	RemoveByValue(id string)
 	// PrintNodes print all nodes
 	PrintNodes()
 	// IsEmpty is the node ring empty

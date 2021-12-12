@@ -17,24 +17,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package registry
 
-import (
-	"trellis.tech/trellis/common.v0/logger"
-)
-
 // Option initial options' functions
 type Option func(*Options)
 
 // Options new registry Options
 type Options struct {
 	Prefix string
-
-	Logger logger.Logger
-}
-
-func Logger(l logger.Logger) Option {
-	return func(o *Options) {
-		o.Logger = l
-	}
 }
 
 func Prefix(pre string) Option {
@@ -42,28 +30,3 @@ func Prefix(pre string) Option {
 		o.Prefix = pre
 	}
 }
-
-//// DeregisterOption options' of deregistering service functions
-//type DeregisterOption func(*DeregisterOptions)
-//
-//// DeregisterOptions deregister service Options
-//type DeregisterOptions struct {
-//	TTL time.Duration
-//	// Other options for implementations of the interface
-//	// can be stored in a context
-//	Context context.Context
-//}
-//
-//// WatchOption options' of watching service functions
-//type WatchOption func(*WatchOptions)
-//
-//// WatchOptions watch service Options
-//type WatchOptions struct {
-//	Logger logger.Logger
-//}
-//
-//func WatchLogger(l logger.Logger) WatchOption {
-//	return func(w *WatchOptions) {
-//		w.Logger = l
-//	}
-//}

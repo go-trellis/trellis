@@ -1,6 +1,7 @@
 package quic
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/lucas-clemente/quic-go"
@@ -16,13 +17,13 @@ type Client struct {
 	client *http.Client
 }
 
-func (p *Client) Call(node *node.Node, in *message.Request) (*message.Response, error) {
+func (p *Client) Call(ctx context.Context, in *message.Request, option ...clients.CallOption) (*message.Response, error) {
 
 	//p.client.Do()
 	return nil, nil
 }
 
-func NewClient() (*Client, error) {
+func NewClient(n *node.Node) (*Client, error) {
 	var qconf quic.Config
 
 	roundTripper := &http3.RoundTripper{

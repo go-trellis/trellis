@@ -7,6 +7,8 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
+	node "trellis.tech/trellis.v1/pkg/node"
+	service "trellis.tech/trellis.v1/pkg/service"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -45,8 +47,140 @@ func (RegisterType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_52e918f9197989dd, []int{0}
 }
 
+type RegisterServices struct {
+	// @gotags: yaml:"register_service_nodes,omitempty"
+	RegisterServiceNodes []*service.ServiceNode `protobuf:"bytes,1,rep,name=register_service_nodes,json=registerServiceNodes,proto3" json:"register_service_nodes,omitempty" yaml:"register_service_nodes,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
+}
+
+func (m *RegisterServices) Reset()         { *m = RegisterServices{} }
+func (m *RegisterServices) String() string { return proto.CompactTextString(m) }
+func (*RegisterServices) ProtoMessage()    {}
+func (*RegisterServices) Descriptor() ([]byte, []int) {
+	return fileDescriptor_52e918f9197989dd, []int{0}
+}
+
+func (m *RegisterServices) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_RegisterServices.Unmarshal(m, b)
+}
+func (m *RegisterServices) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_RegisterServices.Marshal(b, m, deterministic)
+}
+func (m *RegisterServices) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RegisterServices.Merge(m, src)
+}
+func (m *RegisterServices) XXX_Size() int {
+	return xxx_messageInfo_RegisterServices.Size(m)
+}
+func (m *RegisterServices) XXX_DiscardUnknown() {
+	xxx_messageInfo_RegisterServices.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RegisterServices proto.InternalMessageInfo
+
+func (m *RegisterServices) GetRegisterServiceNodes() []*service.ServiceNode {
+	if m != nil {
+		return m.RegisterServiceNodes
+	}
+	return nil
+}
+
+type WatchServices struct {
+	// @gotags: yaml:"watch_services,omitempty"
+	WatchServices        []*WatchService `protobuf:"bytes,1,rep,name=watch_services,json=watchServices,proto3" json:"watch_services,omitempty" yaml:"watch_services,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
+}
+
+func (m *WatchServices) Reset()         { *m = WatchServices{} }
+func (m *WatchServices) String() string { return proto.CompactTextString(m) }
+func (*WatchServices) ProtoMessage()    {}
+func (*WatchServices) Descriptor() ([]byte, []int) {
+	return fileDescriptor_52e918f9197989dd, []int{1}
+}
+
+func (m *WatchServices) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WatchServices.Unmarshal(m, b)
+}
+func (m *WatchServices) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WatchServices.Marshal(b, m, deterministic)
+}
+func (m *WatchServices) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WatchServices.Merge(m, src)
+}
+func (m *WatchServices) XXX_Size() int {
+	return xxx_messageInfo_WatchServices.Size(m)
+}
+func (m *WatchServices) XXX_DiscardUnknown() {
+	xxx_messageInfo_WatchServices.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WatchServices proto.InternalMessageInfo
+
+func (m *WatchServices) GetWatchServices() []*WatchService {
+	if m != nil {
+		return m.WatchServices
+	}
+	return nil
+}
+
+type WatchService struct {
+	// @gotags: yaml:"service,omitempty"
+	Service *service.Service `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty" yaml:"service,omitempty"`
+	// @gotags: yaml:"node_type"
+	NodeType             node.NodeType `protobuf:"varint,2,opt,name=node_type,json=nodeType,proto3,enum=node.NodeType" json:"node_type,omitempty" yaml:"node_type"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *WatchService) Reset()         { *m = WatchService{} }
+func (m *WatchService) String() string { return proto.CompactTextString(m) }
+func (*WatchService) ProtoMessage()    {}
+func (*WatchService) Descriptor() ([]byte, []int) {
+	return fileDescriptor_52e918f9197989dd, []int{2}
+}
+
+func (m *WatchService) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WatchService.Unmarshal(m, b)
+}
+func (m *WatchService) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WatchService.Marshal(b, m, deterministic)
+}
+func (m *WatchService) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WatchService.Merge(m, src)
+}
+func (m *WatchService) XXX_Size() int {
+	return xxx_messageInfo_WatchService.Size(m)
+}
+func (m *WatchService) XXX_DiscardUnknown() {
+	xxx_messageInfo_WatchService.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WatchService proto.InternalMessageInfo
+
+func (m *WatchService) GetService() *service.Service {
+	if m != nil {
+		return m.Service
+	}
+	return nil
+}
+
+func (m *WatchService) GetNodeType() node.NodeType {
+	if m != nil {
+		return m.NodeType
+	}
+	return node.NodeType_Direct
+}
+
 func init() {
 	proto.RegisterEnum("service.RegisterType", RegisterType_name, RegisterType_value)
+	proto.RegisterType((*RegisterServices)(nil), "service.RegisterServices")
+	proto.RegisterType((*WatchServices)(nil), "service.WatchServices")
+	proto.RegisterType((*WatchService)(nil), "service.WatchService")
 }
 
 func init() {
@@ -54,13 +188,23 @@ func init() {
 }
 
 var fileDescriptor_52e918f9197989dd = []byte{
-	// 123 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x29, 0x29, 0x4a, 0xcd,
-	0xc9, 0xc9, 0x2c, 0xd6, 0x2b, 0x49, 0x4d, 0xce, 0xd0, 0x87, 0x71, 0xca, 0x0c, 0xf5, 0x0b, 0x8a,
-	0xf2, 0x4b, 0xf2, 0xf5, 0x8b, 0x52, 0xd3, 0x33, 0x8b, 0x4b, 0x8a, 0x2a, 0xf5, 0xc0, 0x5c, 0x21,
-	0xf6, 0xe2, 0xd4, 0xa2, 0xb2, 0xcc, 0xe4, 0x54, 0x2d, 0x15, 0x2e, 0x9e, 0x20, 0xb0, 0x54, 0x6a,
-	0x51, 0x48, 0x65, 0x41, 0xaa, 0x10, 0x17, 0x17, 0x5b, 0x6e, 0x6a, 0x6e, 0x7e, 0x51, 0xa5, 0x00,
-	0x83, 0x10, 0x07, 0x17, 0x4b, 0x6a, 0x49, 0x72, 0x8a, 0x00, 0xa3, 0x93, 0x7e, 0x94, 0x2e, 0x4e,
-	0xe3, 0xb3, 0xd3, 0xe1, 0x86, 0x5b, 0xc3, 0x18, 0x49, 0x6c, 0x60, 0x6b, 0x8c, 0x01, 0x01, 0x00,
-	0x00, 0xff, 0xff, 0x6b, 0x56, 0x21, 0xb3, 0x96, 0x00, 0x00, 0x00,
+	// 277 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0x41, 0x4b, 0xc3, 0x40,
+	0x10, 0x85, 0x5d, 0x95, 0x5a, 0xa7, 0x6d, 0x08, 0x4b, 0x95, 0xd0, 0x53, 0x08, 0x1e, 0x42, 0xab,
+	0x09, 0xc6, 0xa3, 0x9e, 0x3c, 0x0a, 0x7a, 0x58, 0x05, 0xc1, 0x83, 0x41, 0x93, 0x21, 0x0d, 0xb6,
+	0xdd, 0xb0, 0xbb, 0xb4, 0xe4, 0xdf, 0xcb, 0xa6, 0xbb, 0x21, 0x0a, 0xcd, 0x6d, 0x66, 0xf2, 0xde,
+	0x37, 0x93, 0xb7, 0x70, 0xad, 0x04, 0xae, 0x56, 0xa5, 0x8c, 0x14, 0x66, 0xcb, 0xd8, 0x36, 0xdb,
+	0xdb, 0xb8, 0x12, 0x5c, 0xf1, 0x58, 0x60, 0x51, 0x4a, 0x25, 0xea, 0xa8, 0x69, 0xe9, 0x99, 0x44,
+	0xb1, 0x2d, 0x33, 0x9c, 0x2d, 0xfa, 0x6d, 0x46, 0xb6, 0x77, 0xcd, 0xc2, 0x7e, 0xf1, 0x86, 0xe7,
+	0x46, 0x19, 0x7c, 0x82, 0xcb, 0x9a, 0x8d, 0x28, 0x5e, 0xf7, 0x08, 0x49, 0x9f, 0xe0, 0x52, 0x98,
+	0x59, 0x6a, 0xb8, 0xa9, 0xb6, 0x48, 0x8f, 0xf8, 0x27, 0xe1, 0x28, 0x99, 0x46, 0x76, 0x9b, 0xb1,
+	0xbc, 0xf0, 0x1c, 0xd9, 0x54, 0xfc, 0xe5, 0xe8, 0xa1, 0x0c, 0x9e, 0x61, 0xf2, 0xfe, 0xa5, 0xb2,
+	0x65, 0x0b, 0x7f, 0x00, 0x67, 0xa7, 0x07, 0x96, 0x6c, 0xa1, 0x17, 0x2d, 0xb4, 0xab, 0x67, 0x93,
+	0x5d, 0xd7, 0x1d, 0x14, 0x30, 0xee, 0x7e, 0xa6, 0x73, 0xb0, 0x01, 0x79, 0xc4, 0x27, 0xe1, 0x28,
+	0x71, 0xff, 0xdf, 0xc6, 0xac, 0x80, 0x2e, 0xe0, 0x5c, 0xff, 0x45, 0xaa, 0xea, 0x0a, 0xbd, 0x63,
+	0x9f, 0x84, 0x4e, 0xe2, 0x44, 0x4d, 0x14, 0xfa, 0xd4, 0xb7, 0xba, 0x42, 0x36, 0xdc, 0x98, 0x6a,
+	0x7e, 0x05, 0x63, 0x9b, 0x8b, 0xee, 0x29, 0xc0, 0x60, 0x8d, 0x6b, 0x2e, 0x6a, 0xf7, 0x88, 0x0e,
+	0xe1, 0x14, 0x55, 0x96, 0xbb, 0xe4, 0x31, 0xfe, 0xb8, 0x39, 0x98, 0xf4, 0x4f, 0xd1, 0xbe, 0xe5,
+	0xbd, 0x2d, 0xbe, 0x07, 0x4d, 0xea, 0x77, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0xb3, 0x15, 0x68,
+	0x87, 0x05, 0x02, 0x00, 0x00,
 }

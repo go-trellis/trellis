@@ -4,7 +4,27 @@ package service;
 
 option go_package = "trellis.tech/trellis.v1/pkg/registry;registry";
 
+import "trellis.tech/trellis.v1/proto/service.proto";
+import "trellis.tech/trellis.v1/proto/node.proto";
+
 enum RegisterType {
     memory = 0;
     etcd   = 1;
+}
+
+message RegisterServices {
+    // @gotags: yaml:"register_service_nodes,omitempty"
+    repeated service.ServiceNode register_service_nodes = 1;
+}
+
+message WatchServices {
+    // @gotags: yaml:"watch_services,omitempty"
+    repeated WatchService watch_services = 1;
+}
+
+message WatchService {
+    // @gotags: yaml:"service,omitempty"
+    service.Service service = 1;
+    // @gotags: yaml:"node_type"
+    node.NodeType node_type = 2;
 }

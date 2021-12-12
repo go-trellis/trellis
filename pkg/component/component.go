@@ -3,7 +3,6 @@ package component
 import (
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/message"
-	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis/common.v0/config"
 	"trellis.tech/trellis/common.v0/logger"
 )
@@ -11,7 +10,7 @@ import (
 type Component interface {
 	lifecycle.LifeCycle
 
-	Route(*message.Payload) (interface{}, error)
+	Route(topic string, payload *message.Payload) (interface{}, error)
 }
 
 // Option 处理参数函数
@@ -38,15 +37,3 @@ func Logger(l logger.Logger) Option {
 }
 
 type NewComponentFunc func(...Option) (Component, error)
-
-func RegisterNewComponentFunc(s *service.Service, newFunc NewComponentFunc) {
-	if err := m.RegisterNewComponentFunc(s, newFunc); err != nil {
-		panic(err)
-	}
-}
-
-func RegisterComponent(s *service.Service, comp Component) {
-	if err := m.RegisterComponent(s, comp); err != nil {
-		panic(err)
-	}
-}

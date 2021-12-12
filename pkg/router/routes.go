@@ -18,19 +18,32 @@ type routes struct {
 	Registry registry.Registry
 
 	managerLocker sync.RWMutex
-	nodeManagers  map[string]node.Manager
+
+	nodeManagers map[string]node.Manager
 }
 
 func (p *routes) Start() (err error) {
-	switch p.conf.RegisterType {
+	switch p.conf.RegistryConfig.RegisterType {
 	case registry.RegisterType_etcd:
 	case registry.RegisterType_memory:
 		fallthrough
 	default:
 		p.Registry, err = memory.NewRegistry(
-			registry.Logger(p.conf.Logger.With("register", "memory")),
-			registry.Prefix(p.conf.RegisterPrefix),
+			//registry.Logger(p.conf.Logger.With("register", "memory")),
+			registry.Prefix(p.conf.RegistryConfig.RegisterPrefix),
 		)
+	}
+
+	for _, s := range p.conf.RegistryConfig.RegisterServiceNodes {
+		if err = p.Registry.Register(s); err != nil {
+			return
+		}
+	}
+
+	for _, s := range p.conf.RegistryConfig.WatchServices {
+		if err = p.Watch(s); err != nil {
+			return
+		}
 	}
 	return
 }
@@ -64,12 +77,12 @@ func (p *routes) Deregister(s *service.ServiceNode) error {
 	return p.Registry.Deregister(s)
 }
 
-func (p *routes) Watch(s *service.Service) error {
-	watcher, err := p.Registry.Watch(s)
+func (p *routes) Watch(s *registry.WatchService) error {
+	watcher, err := p.Registry.Watch(s.GetService())
 	if err != nil {
 		return err
 	}
-	go func(wch registry.Watcher) {
+	go func(wch registry.Watcher, nodeType node.NodeType) {
 		for {
 			r, err := wch.Next()
 			if err != nil {
@@ -83,7 +96,7 @@ func (p *routes) Watch(s *service.Service) error {
 			p.managerLocker.RUnlock()
 
 			if !ok {
-				manager, err = node.New(p.conf.NodeType, servicePath)
+				manager, err = node.New(nodeType, servicePath)
 				if err != nil {
 					p.Logger.Errorf("failed_watch_service", "new_node_manager", servicePath, "error", err)
 					continue
@@ -97,9 +110,9 @@ func (p *routes) Watch(s *service.Service) error {
 				p.managerLocker.Unlock()
 			case service.EventType_delete:
 				p.Logger.Errorf("watch_service", "delete_service_node", r.ServiceNode)
-				manager.RemoveByID(r.ServiceNode.GetNode().GetID())
+				manager.RemoveByValue(r.ServiceNode.GetNode().GetValue())
 			}
 		}
-	}(watcher)
+	}(watcher, s.NodeType)
 	return nil
 }

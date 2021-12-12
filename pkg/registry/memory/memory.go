@@ -27,7 +27,6 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 
 	"github.com/google/uuid"
-	"trellis.tech/trellis/common.v0/logger"
 )
 
 var (
@@ -40,7 +39,6 @@ type memory struct {
 	sync.RWMutex
 
 	prefix string
-	logger logger.Logger
 
 	// map[service_name]map[service_node_value]*registry.Service
 	services map[string]map[string]*service.ServiceNode
@@ -58,7 +56,6 @@ func NewRegistry(opts ...registry.Option) (registry.Registry, error) {
 	r := &memory{
 		id: uuid.New().String(),
 
-		logger: options.Logger,
 		prefix: options.Prefix,
 
 		// domain/service version

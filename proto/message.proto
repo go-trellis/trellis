@@ -8,8 +8,9 @@ import "trellis.tech/trellis.v1/proto/service.proto";
 
 message Request {
     service.Service service = 1;
+
     // Request payload
-    Payload payload = 3;
+    Payload payload = 2;
 }
 
 message Response {
@@ -21,9 +22,6 @@ message Response {
 }
 
 message Payload {
-    // API Handler name
-    string topic = 1;
-
-    map<string, string> header = 2;
-    bytes body                 = 3;
+    map<string, string> header = 1;
+    bytes body                 = 2;
 }

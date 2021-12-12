@@ -46,7 +46,6 @@ func NewNodes(cfg config.Config) (ms map[string]Manager, err error) {
 
 		for _, nKey := range nodesCfg.GetKeys() {
 			item := &Node{
-				ID:     nKey,
 				Value:  nodesCfg.GetString(nKey + ".value"),
 				Weight: uint32(nodesCfg.GetInt(nKey + ".weight")),
 			}

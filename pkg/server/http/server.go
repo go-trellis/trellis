@@ -2,20 +2,19 @@ package http
 
 import (
 	"context"
-	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"trellis.tech/trellis.v1/pkg/clients/client"
+	"trellis.tech/trellis.v1/pkg/clients/local"
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/server"
-	"trellis.tech/trellis.v1/pkg/service"
+	"trellis.tech/trellis.v1/pkg/trellis"
 
 	routing "github.com/go-trellis/fasthttp-routing"
 	"github.com/valyala/fasthttp"
@@ -28,49 +27,23 @@ var (
 )
 
 type Server struct {
+	conf trellis.ServerConfig `yaml:"server_config" json:"server_config"`
+
 	fastServer *fasthttp.Server
 	fastRouter *routing.Router
 
-	conf Config
-
 	routes router.Router
-
-	compManager component.Manager
 }
 
-type Config struct {
-	Address   string `yaml:"address" json:"address"`
-	EnableTLS bool   `yaml:"enable_tls" json:"enable_tls"`
-	CertFile  string `yaml:"cert_file" json:"cert_file"`
-	KeyFile   string `yaml:"key_file" json:"key_file"`
-
-	RouterConfig router.Config `json:"router_config" yaml:"router_config"`
-
-	Services []*service.Service `yaml:"services" json:"services"`
-}
-
-func (cfg *Config) RegisterFlags(f *flag.FlagSet) {
-	cfg.ParseFlagsWithPrefix(f, "")
-}
-
-// ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
-func (cfg *Config) ParseFlagsWithPrefix(f *flag.FlagSet, prefix string) {
-	f.StringVar(&cfg.Address, prefix+".server.address", "", "")
-	f.BoolVar(&cfg.EnableTLS, prefix+".server.enable_tls", false, "")
-	f.StringVar(&cfg.CertFile, prefix+".server.cert_file", "", "")
-	f.StringVar(&cfg.KeyFile, prefix+".server.cert_file", "", "")
-	cfg.RouterConfig.ParseFlagsWithPrefix(f, prefix)
-}
-
-func NewServer(conf Config) (*Server, error) {
+func NewServer(conf trellis.ServerConfig) (*Server, error) {
 	s := &Server{
 		conf: conf,
 
-		fastRouter:  routing.New(),
-		compManager: component.GetManager(),
+		routes: router.NewRouter(conf.RouterConfig),
+
+		fastRouter: routing.New(),
 	}
 
-	s.routes = router.NewRouter(s.conf.RouterConfig)
 	if err := s.routes.Start(); err != nil {
 		return nil, err
 	}
@@ -115,7 +88,7 @@ func (p *Server) Start() error {
 
 	// TODO config to new component
 	for _, s := range p.conf.Services {
-		if err := p.compManager.NewComponent(s); err != nil {
+		if err := router.NewComponent(s); err != nil {
 			return err
 		}
 	}
@@ -132,7 +105,7 @@ func (p *Server) Start() error {
 
 		var err error
 		if p.conf.EnableTLS {
-			err = p.fastServer.ListenAndServeTLS(p.conf.Address, p.conf.CertFile, p.conf.KeyFile)
+			err = p.fastServer.ListenAndServeTLS(p.conf.Address, p.conf.TLSConfig.CertPath, p.conf.TLSConfig.KeyPath)
 		} else {
 			err = p.fastServer.ListenAndServe(p.conf.Address)
 		}
@@ -148,7 +121,7 @@ func (p *Server) Start() error {
 }
 
 func (p *Server) Stop() error {
-	if err := p.compManager.Stop(); err != nil {
+	if err := router.StopComponents(); err != nil {
 		// TODO log
 		fmt.Println(err)
 	}
@@ -166,18 +139,6 @@ func (p *Server) Stop() error {
 	return nil
 }
 
-func (p *Server) Register(s *service.ServiceNode) error {
-	return p.routes.Register(s)
-}
-
-func (p *Server) Deregister(s *service.ServiceNode) error {
-	return p.routes.Deregister(s)
-}
-
-func (p *Server) Watch(s *service.Service) error {
-	return p.routes.Watch(s)
-}
-
 func (p *Server) HandleHTTP(ctx *routing.Context) error {
 	req, err := p.parseToRequest(ctx)
 	if err != nil {
@@ -185,7 +146,7 @@ func (p *Server) HandleHTTP(ctx *routing.Context) error {
 	}
 
 	fmt.Println(*req)
-	resp, err := p.Handle(context.Background(), req)
+	resp, err := p.Call(context.Background(), req)
 	if err != nil {
 		return err
 	}
@@ -193,69 +154,27 @@ func (p *Server) HandleHTTP(ctx *routing.Context) error {
 	return p.parseToResponse(ctx, resp)
 }
 
-func (p *Server) Handle(ctx context.Context, msg *message.Request) (*message.Response, error) {
-	comp := p.compManager.GetComponent(msg.GetService())
-	if comp != nil {
-		hResp, err := comp.Route(msg.GetPayload())
-		if err != nil {
-			// TODO log err
-			return nil, err
-		}
-
-		if hResp == nil {
-			return &message.Response{
-				Code: 0,
-			}, nil
-		}
-		switch t := hResp.(type) {
-		case message.Response:
-			return &t, nil
-		case *message.Response:
-			return t, nil
-		case *message.Payload:
-			return &message.Response{
-				Code:    0,
-				Payload: t,
-			}, nil
-		case message.Payload:
-			return &message.Response{
-				Code:    0,
-				Payload: &t,
-			}, nil
-		default:
-			bs, err := json.Marshal(hResp)
-			if err != nil {
-				return nil, err
-			}
-			return &message.Response{
-				Code: 0,
-				Payload: &message.Payload{
-					Header: map[string]string{"Content-Type": codec.ContentTypeJson},
-					Body:   bs,
-				},
-			}, nil
-		}
-	}
-
+func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
 	// TODO with keys
-	node, ok := p.routes.GetServiceNode(msg.GetService())
+	serviceNode, ok := p.routes.GetServiceNode(msg.GetService())
 	if !ok {
-		return nil, errcode.Newf("not found handler: %+v", msg.GetService())
+		c, _ := local.NewClient()
+		return c.Call(ctx, msg)
 	}
 
-	c, err := client.New(node.Protocol)
+	c, err := client.New(serviceNode)
 	if err != nil {
 		return nil, err
 	}
-
-	return c.Call(node, msg)
+	// TODO Options
+	return c.Call(ctx, msg)
 }
 
-func (p *Server) Route(msg *message.Payload) (interface{}, error) {
+func (p *Server) Route(topic string, msg *message.Payload) (interface{}, error) {
 	return nil, nil
 }
 
-func (p *Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
+func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
 
 	ct := string(ctx.Request.Header.Peek("Content-Type"))
 
@@ -265,22 +184,24 @@ func (p *Server) parseToRequest(ctx *routing.Context) (*message.Request, error) 
 	}
 
 	req := &message.Request{}
-	if ctx.Request.Body() == nil {
+	body := ctx.Request.Body()
+	if body == nil {
 		return req, nil
 	}
 
-	if err := c.Unmarshal(ctx.Request.Body(), req); err != nil {
+	if err := c.Unmarshal(body, req); err != nil {
 		return nil, err
 	}
+
 	req.Payload = &message.Payload{
 		Header: map[string]string{"Content-Type": ct},
 	}
-	req.Payload.Body = ctx.Request.Body()
+	req.Payload.Body = body
 
 	return req, nil
 }
 
-func (p *Server) parseToResponse(ctx *routing.Context, msg *message.Response) error {
+func (*Server) parseToResponse(ctx *routing.Context, msg *message.Response) error {
 
 	ct := string(ctx.Request.Header.Peek("Content-Type"))
 	c := codec.Select(ct)
@@ -291,6 +212,7 @@ func (p *Server) parseToResponse(ctx *routing.Context, msg *message.Response) er
 	if msg == nil {
 		msg = &message.Response{}
 	}
+	msg.GetPayload().Set("Content-Type", ct)
 
 	bs, err := c.Marshal(msg)
 	if err != nil {
@@ -299,7 +221,6 @@ func (p *Server) parseToResponse(ctx *routing.Context, msg *message.Response) er
 
 	ctx.SetContentType(codec.ContentTypeJson)
 	ctx.SetStatusCode(http.StatusOK)
-	fmt.Println(bs)
 	ctx.SetBody(bs)
 
 	return nil

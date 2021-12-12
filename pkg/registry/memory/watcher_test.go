@@ -20,16 +20,19 @@ package memory
 import (
 	"testing"
 
+	"trellis.tech/trellis/common.v0/logger"
+
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/service"
 )
 
 func TestWatcher(t *testing.T) {
 	w := &Watcher{
-		id:   "test",
-		res:  make(chan *registry.Result),
-		exit: make(chan bool),
-		s:    &service.Service{},
+		id:     "test",
+		res:    make(chan *registry.Result),
+		exit:   make(chan bool),
+		serv:   &service.Service{},
+		logger: logger.Noop(),
 	}
 
 	go func() {
@@ -43,7 +46,7 @@ func TestWatcher(t *testing.T) {
 
 	w.Stop()
 
-	if _, err := w.Next(); err == nil {
+	if _, err := w.Next(); err != nil {
 		t.Fatal("expected error on Next()")
 	}
 }

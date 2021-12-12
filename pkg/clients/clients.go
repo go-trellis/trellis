@@ -1,10 +1,22 @@
 package clients
 
 import (
+	"context"
+
+	"google.golang.org/grpc"
 	"trellis.tech/trellis.v1/pkg/message"
-	"trellis.tech/trellis.v1/pkg/node"
 )
 
+type NewOption func(*NewOptions)
+type NewOptions struct {
+	GrpcOptions []grpc.DialOption
+}
+
+type CallOption func(*CallOptions)
+type CallOptions struct {
+	GrpcCallOptions []grpc.CallOption
+}
+
 type Client interface {
-	Call(node *node.Node, in *message.Request) (*message.Response, error)
+	Call(context.Context, *message.Request, ...CallOption) (*message.Response, error)
 }

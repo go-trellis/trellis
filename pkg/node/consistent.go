@@ -69,16 +69,16 @@ func (p *consistent) add(pNode *Node) {
 		p.hashes = make(map[uint32]*Node)
 	}
 
-	node := p.nodes[pNode.ID]
+	node := p.nodes[pNode.Value]
 
 	if node != nil {
-		p.removeByID(pNode.ID)
+		p.removeByValue(pNode.Value)
 	}
 
-	p.nodes[pNode.ID] = pNode
+	p.nodes[pNode.Value] = pNode
 
 	for i := uint32(0); i < pNode.Weight; i++ {
-		crc32Hash := p.genKey(pNode.ID, int(i+1))
+		crc32Hash := p.genKey(pNode.Value, int(i+1))
 		if p.hashes[crc32Hash] == nil {
 			vnode := *pNode
 			vnode.Number = i + 1
@@ -123,13 +123,13 @@ func (p *consistent) remove() {
 	p.updateRings()
 }
 
-func (p *consistent) RemoveByID(id string) {
+func (p *consistent) RemoveByValue(id string) {
 	p.Lock()
 	defer p.Unlock()
-	p.removeByID(id)
+	p.removeByValue(id)
 }
 
-func (p *consistent) removeByID(id string) {
+func (p *consistent) removeByValue(id string) {
 	if p.nodes == nil {
 		return
 	} else if p.IsEmpty() {
@@ -147,7 +147,7 @@ func (p *consistent) removeByID(id string) {
 		if value := p.hashes[crc32Hash]; value == nil {
 			continue
 		} else {
-			if value.ID != id {
+			if value.Value != id {
 				continue
 			}
 		}

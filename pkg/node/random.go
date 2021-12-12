@@ -63,7 +63,7 @@ func (p *random) add(pNode *Node) {
 		p.nodes = make(map[string]*Node)
 	}
 
-	p.nodes[pNode.ID] = pNode
+	p.nodes[pNode.Value] = pNode
 
 	p.updateRings()
 }
@@ -80,13 +80,13 @@ func (p *random) remove() {
 	p.count = 0
 }
 
-func (p *random) RemoveByID(id string) {
+func (p *random) RemoveByValue(id string) {
 	p.Lock()
 	defer p.Unlock()
-	p.removeByID(id)
+	p.removeByValue(id)
 }
 
-func (p *random) removeByID(id string) {
+func (p *random) removeByValue(id string) {
 	if p.nodes == nil {
 		return
 	} else if p.IsEmpty() {

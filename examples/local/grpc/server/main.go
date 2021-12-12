@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -10,15 +9,13 @@ import (
 	_ "trellis.tech/trellis.v1/examples/components"
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/router"
-	"trellis.tech/trellis.v1/pkg/server/http"
+	"trellis.tech/trellis.v1/pkg/server/grpc"
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
-
-	routing "github.com/go-trellis/fasthttp-routing"
 )
 
 func main() {
-	s, err := http.NewServer(trellis.ServerConfig{
+	s, err := grpc.NewServer(trellis.ServerConfig{
 		Address: "0.0.0.0:8000",
 		RouterConfig: router.Config{
 			RegistryConfig: registry.Config{
@@ -38,23 +35,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	s.RegisterHandler(http.Handler{
-		Method: "POST",
-		Path:   "/v1",
-		Uses: []routing.Handler{
-			func(*routing.Context) error {
-				fmt.Println("I am an use handler")
-				return nil
-			},
-			//func(ctx *routing.Context) error {
-			//
-			//	fmt.Println("I am an error use handler")
-			//	return routing.NewHTTPError(404, `{"code": 404}`)
-			//},
-		},
-		Handler: s.HandleHTTP,
-	})
 
 	if err := s.Start(); err != nil {
 		log.Fatalln(err)

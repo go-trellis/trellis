@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 
 	"trellis.tech/trellis.v1/pkg/clients"
@@ -14,12 +15,11 @@ type Client struct {
 	client *http.Client
 }
 
-func (p *Client) Call(node *node.Node, in *message.Request) (*message.Response, error) {
+func (p *Client) Call(ctx context.Context, in *message.Request, opts ...clients.CallOption) (*message.Response, error) {
 	return nil, nil
 }
 
-func NewClient() (*Client, error) {
-
+func NewClient(node *node.Node) (*Client, error) {
 	return &Client{
 		client: &http.Client{},
 	}, nil

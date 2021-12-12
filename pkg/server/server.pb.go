@@ -30,19 +30,16 @@ func init() {
 }
 
 var fileDescriptor_ba7fd9ea3c4ff36f = []byte{
-	// 178 bytes of a gzipped FileDescriptorProto
+	// 135 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x2a, 0x29, 0x4a, 0xcd,
 	0xc9, 0xc9, 0x2c, 0xd6, 0x2b, 0x49, 0x4d, 0xce, 0xd0, 0x87, 0x71, 0xca, 0x0c, 0xf5, 0x0b, 0x8a,
 	0xf2, 0x4b, 0xf2, 0xf5, 0x8b, 0x53, 0x8b, 0xca, 0x52, 0x8b, 0xf4, 0xc0, 0x1c, 0x21, 0x96, 0xf4,
 	0xa2, 0x82, 0x64, 0x29, 0x6d, 0xfc, 0x3a, 0x72, 0x53, 0x8b, 0x8b, 0x13, 0xd3, 0x53, 0x21, 0x5a,
-	0x8c, 0xe6, 0x31, 0x72, 0xb1, 0x87, 0x40, 0x94, 0x08, 0xe9, 0x72, 0xb1, 0x38, 0x27, 0xe6, 0xe4,
-	0x08, 0x09, 0xe8, 0xc1, 0xd4, 0x04, 0xa5, 0x16, 0x96, 0xa6, 0x16, 0x97, 0x48, 0x09, 0x22, 0x89,
-	0x14, 0x17, 0xe4, 0xe7, 0x15, 0xa7, 0x2a, 0x31, 0x08, 0x19, 0x73, 0xb1, 0x05, 0x97, 0x14, 0xa5,
-	0x26, 0xe6, 0x12, 0xa9, 0x41, 0x83, 0xd1, 0x80, 0x51, 0x48, 0x9f, 0x8b, 0x3d, 0xa0, 0x34, 0x29,
-	0x27, 0xb3, 0x38, 0x03, 0x49, 0x57, 0x40, 0x62, 0x65, 0x4e, 0x7e, 0x62, 0x8a, 0x14, 0x86, 0x88,
-	0x12, 0x83, 0x93, 0x76, 0x94, 0x26, 0x4e, 0xff, 0x64, 0xa7, 0x43, 0xfd, 0x6f, 0x0d, 0xa1, 0x92,
-	0xd8, 0xc0, 0x9e, 0x32, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0x2c, 0xa0, 0xc0, 0x94, 0x35, 0x01,
-	0x00, 0x00,
+	0x8c, 0x2c, 0xb8, 0xd8, 0x43, 0x20, 0x2a, 0x84, 0x74, 0xb9, 0x58, 0x9c, 0x13, 0x73, 0x72, 0x84,
+	0x04, 0xf4, 0x60, 0x4a, 0x82, 0x52, 0x0b, 0x4b, 0x53, 0x8b, 0x4b, 0xa4, 0x04, 0x91, 0x44, 0x8a,
+	0x0b, 0xf2, 0xf3, 0x8a, 0x53, 0x95, 0x18, 0x9c, 0xb4, 0xa3, 0x34, 0x71, 0x5a, 0x94, 0x9d, 0x0e,
+	0x75, 0x98, 0x35, 0x84, 0x4a, 0x62, 0x03, 0xdb, 0x66, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x3f,
+	0x1c, 0xab, 0x11, 0xce, 0x00, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -59,10 +56,6 @@ const _ = grpc.SupportPackageIsVersion4
 type TrellisClient interface {
 	// Call allows a single request to be made
 	Call(ctx context.Context, in *message.Request, opts ...grpc.CallOption) (*message.Response, error)
-	// Stream is a bidirectional stream
-	Stream(ctx context.Context, opts ...grpc.CallOption) (Trellis_StreamClient, error)
-	// Publish publishes a payload and returns an empty payload
-	Publish(ctx context.Context, in *message.Payload, opts ...grpc.CallOption) (*message.Payload, error)
 }
 
 type trellisClient struct {
@@ -82,54 +75,10 @@ func (c *trellisClient) Call(ctx context.Context, in *message.Request, opts ...g
 	return out, nil
 }
 
-func (c *trellisClient) Stream(ctx context.Context, opts ...grpc.CallOption) (Trellis_StreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Trellis_serviceDesc.Streams[0], "/grpc.Trellis/Stream", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &trellisStreamClient{stream}
-	return x, nil
-}
-
-type Trellis_StreamClient interface {
-	Send(*message.Request) error
-	Recv() (*message.Response, error)
-	grpc.ClientStream
-}
-
-type trellisStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *trellisStreamClient) Send(m *message.Request) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *trellisStreamClient) Recv() (*message.Response, error) {
-	m := new(message.Response)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *trellisClient) Publish(ctx context.Context, in *message.Payload, opts ...grpc.CallOption) (*message.Payload, error) {
-	out := new(message.Payload)
-	err := c.cc.Invoke(ctx, "/grpc.Trellis/Publish", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // TrellisServer is the server API for Trellis service.
 type TrellisServer interface {
 	// Call allows a single request to be made
 	Call(context.Context, *message.Request) (*message.Response, error)
-	// Stream is a bidirectional stream
-	Stream(Trellis_StreamServer) error
-	// Publish publishes a payload and returns an empty payload
-	Publish(context.Context, *message.Payload) (*message.Payload, error)
 }
 
 // UnimplementedTrellisServer can be embedded to have forward compatible implementations.
@@ -138,12 +87,6 @@ type UnimplementedTrellisServer struct {
 
 func (*UnimplementedTrellisServer) Call(ctx context.Context, req *message.Request) (*message.Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Call not implemented")
-}
-func (*UnimplementedTrellisServer) Stream(srv Trellis_StreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
-}
-func (*UnimplementedTrellisServer) Publish(ctx context.Context, req *message.Payload) (*message.Payload, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
 }
 
 func RegisterTrellisServer(s *grpc.Server, srv TrellisServer) {
@@ -168,50 +111,6 @@ func _Trellis_Call_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Trellis_Stream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(TrellisServer).Stream(&trellisStreamServer{stream})
-}
-
-type Trellis_StreamServer interface {
-	Send(*message.Response) error
-	Recv() (*message.Request, error)
-	grpc.ServerStream
-}
-
-type trellisStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *trellisStreamServer) Send(m *message.Response) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *trellisStreamServer) Recv() (*message.Request, error) {
-	m := new(message.Request)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _Trellis_Publish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(message.Payload)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TrellisServer).Publish(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/grpc.Trellis/Publish",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TrellisServer).Publish(ctx, req.(*message.Payload))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Trellis_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "grpc.Trellis",
 	HandlerType: (*TrellisServer)(nil),
@@ -220,18 +119,7 @@ var _Trellis_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Call",
 			Handler:    _Trellis_Call_Handler,
 		},
-		{
-			MethodName: "Publish",
-			Handler:    _Trellis_Publish_Handler,
-		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Stream",
-			Handler:       _Trellis_Stream_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "trellis.tech/trellis.v1/proto/server.proto",
 }

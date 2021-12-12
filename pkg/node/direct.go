@@ -67,15 +67,15 @@ func (p *direct) remove() {
 	p.node = nil
 }
 
-func (p *direct) RemoveByID(id string) {
-	p.removeByID(id)
+func (p *direct) RemoveByValue(value string) {
+	p.removeByValue(value)
 }
 
-func (p *direct) removeByID(id string) {
+func (p *direct) removeByValue(value string) {
 	if p.node == nil {
 		return
 	}
-	if p.node.ID == id {
+	if p.node.Value == value {
 		p.node = nil
 	}
 }

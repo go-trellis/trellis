@@ -70,15 +70,15 @@ func (p *roundrobin) add(pNode *Node) {
 		p.nodes = make(map[string]*Node)
 	}
 
-	_, ok := p.nodes[pNode.ID]
+	_, ok := p.nodes[pNode.Value]
 	if !ok {
 		p.count++
-		p.indexes = append(p.indexes, pNode.ID)
+		p.indexes = append(p.indexes, pNode.Value)
 
 		sort.Sort(p.indexes)
 	}
 
-	p.nodes[pNode.ID] = pNode
+	p.nodes[pNode.Value] = pNode
 }
 
 func (p *roundrobin) NodeFor(...string) (*Node, bool) {
@@ -111,13 +111,13 @@ func (p *roundrobin) remove() {
 	p.robinIndex = 0
 }
 
-func (p *roundrobin) RemoveByID(id string) {
+func (p *roundrobin) RemoveByValue(value string) {
 	p.Lock()
 	defer p.Unlock()
-	p.removeByID(id)
+	p.removeByValue(value)
 }
 
-func (p *roundrobin) removeByID(id string) {
+func (p *roundrobin) removeByValue(id string) {
 	if p.IsEmpty() {
 		p.remove()
 		return
