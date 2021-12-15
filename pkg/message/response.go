@@ -65,3 +65,7 @@ func NewResponse(data interface{}, opts ...Option) *Response {
 	resp.Payload.Body = bs
 	return resp
 }
+
+func (m *Response) SetPayload(payload *Payload) {
+	m.Payload = payload
+}

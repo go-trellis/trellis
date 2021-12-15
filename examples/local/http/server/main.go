@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	_ "trellis.tech/trellis.v1/examples/components"
+	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/server/http"
@@ -30,9 +31,10 @@ func main() {
 			//ETCDConfig     etcd.Config
 			//Logger: logger.Noop(),
 		},
-		Services: []*service.Service{
-			//service.NewService("trellis", "componenta", "v1"),
-			service.NewService("trellis", "componentb", "v1"),
+		Components: []*component.Config{
+			&component.Config{
+				Service: service.NewService("trellis", "componentb", "v1"),
+			},
 		},
 	})
 	if err != nil {

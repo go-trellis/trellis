@@ -2,11 +2,14 @@ package router
 
 import (
 	"sync"
+	"time"
 
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
+	"trellis.tech/trellis.v1/pkg/registry/etcd"
 	"trellis.tech/trellis.v1/pkg/registry/memory"
 	"trellis.tech/trellis.v1/pkg/service"
+
 	"trellis.tech/trellis/common.v0/logger"
 )
 
@@ -23,14 +26,24 @@ type routes struct {
 }
 
 func (p *routes) Start() (err error) {
+	options := []registry.Option{
+		registry.Prefix(p.conf.RegistryConfig.RegisterPrefix),
+		registry.EtcdConfig(&p.conf.RegistryConfig.ETCDConfig),
+		registry.TTL(time.Duration(p.conf.RegistryConfig.TTL)),
+		registry.Heartbeat(time.Duration(p.conf.RegistryConfig.Heartbeat)),
+	}
 	switch p.conf.RegistryConfig.RegisterType {
 	case registry.RegisterType_etcd:
+		p.Registry, err = etcd.NewRegistry(
+			p.Logger.With("registry", registry.RegisterType_etcd.String()),
+			options...,
+		)
 	case registry.RegisterType_memory:
 		fallthrough
 	default:
 		p.Registry, err = memory.NewRegistry(
-			//registry.Logger(p.conf.Logger.With("register", "memory")),
-			registry.Prefix(p.conf.RegistryConfig.RegisterPrefix),
+			p.Logger.With("registry", p.conf.RegistryConfig.RegisterType.String()),
+			options...,
 		)
 	}
 

@@ -5,6 +5,7 @@ import (
 
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/service"
+
 	"trellis.tech/trellis/common.v0/errcode"
 )
 
@@ -60,21 +61,21 @@ func (p *compRouter) RegisterComponent(s *service.Service, comp component.Compon
 	return comp.Start()
 }
 
-func (p *compRouter) NewComponent(s *service.Service, opts ...component.Option) error {
+func (p *compRouter) NewComponent(c *component.Config) error {
 	p.mu.RLock()
-	newFunc, ok := p.newFuncs[s.FullPath()]
+	newFunc, ok := p.newFuncs[c.Service.FullPath()]
 	if !ok {
 		p.mu.RUnlock()
-		return errcode.Newf("new component function of service(%q) is not exist", s.FullPath())
+		return errcode.Newf("new component function of service(%q) is not exist", c.Service.FullPath())
 	}
 	p.mu.RUnlock()
 
-	comp, err := newFunc(opts...)
+	comp, err := newFunc(c)
 	if err != nil {
 		return err
 	}
 
-	return p.RegisterComponent(s, comp)
+	return p.RegisterComponent(c.Service, comp)
 }
 
 func (p *compRouter) GetComponent(s *service.Service) component.Component {
@@ -123,8 +124,8 @@ func GetComponent(s *service.Service) component.Component {
 	return compR.GetComponent(s)
 }
 
-func NewComponent(s *service.Service, opts ...component.Option) error {
-	return compR.NewComponent(s, opts...)
+func NewComponent(c *component.Config) error {
+	return compR.NewComponent(c)
 }
 
 func StopComponents() error {

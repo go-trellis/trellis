@@ -3,11 +3,10 @@ package components
 import (
 	"fmt"
 
-	"trellis.tech/trellis.v1/pkg/router"
-	"trellis.tech/trellis.v1/pkg/service"
-
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
+	"trellis.tech/trellis.v1/pkg/router"
+	"trellis.tech/trellis.v1/pkg/service"
 )
 
 func init() {
@@ -17,7 +16,7 @@ func init() {
 
 type ComponentA struct{}
 
-func NewComponentA(...component.Option) (component.Component, error) {
+func NewComponentA(config *component.Config) (component.Component, error) {
 	return &ComponentA{}, nil
 }
 

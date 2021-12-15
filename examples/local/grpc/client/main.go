@@ -4,13 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	"trellis.tech/trellis.v1/pkg/clients/grpc"
+	"trellis.tech/trellis.v1/pkg/message"
+	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/service"
 
-	"trellis.tech/trellis.v1/pkg/message"
-
-	"trellis.tech/trellis.v1/pkg/clients/grpc"
-	"trellis.tech/trellis.v1/pkg/node"
+	"trellis.tech/trellis/common.v0/json"
 )
+
+type Response struct {
+	Message string `json:"message"`
+}
 
 func main() {
 	c, err := grpc.NewClient(&node.Node{
@@ -30,4 +34,11 @@ func main() {
 	}
 
 	fmt.Println(resp)
+
+	r := &Response{}
+	if err := json.Unmarshal(resp.GetPayload().GetBody(), r); err != nil {
+		panic(err)
+	}
+	fmt.Println(r)
+
 }

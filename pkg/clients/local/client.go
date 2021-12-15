@@ -7,6 +7,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/router"
+
 	"trellis.tech/trellis/common.v0/errcode"
 	"trellis.tech/trellis/common.v0/json"
 )

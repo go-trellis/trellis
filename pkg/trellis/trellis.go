@@ -3,8 +3,9 @@ package trellis
 import (
 	"flag"
 
+	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/router"
-	"trellis.tech/trellis.v1/pkg/service"
+
 	"trellis.tech/trellis/common.v0/crypto/tls"
 )
 
@@ -14,7 +15,7 @@ type ServerConfig struct {
 	TLSConfig    tls.Config    `yaml:",inline" json:",inline"`
 	RouterConfig router.Config `yaml:"router_config" json:"router_config"`
 
-	Services []*service.Service `yaml:"services" json:"services"`
+	Components []*component.Config `yaml:"components" json:"components"`
 }
 
 func (cfg *ServerConfig) ParseFlags(f *flag.FlagSet) {

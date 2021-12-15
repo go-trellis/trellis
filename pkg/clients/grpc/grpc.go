@@ -3,12 +3,12 @@ package grpc
 import (
 	"context"
 
-	"google.golang.org/grpc"
-
 	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/server"
+
+	"google.golang.org/grpc"
 )
 
 var _ clients.Client = (*Client)(nil)
@@ -22,7 +22,6 @@ func (p *Client) Call(ctx context.Context, in *message.Request, opts ...clients.
 	for _, o := range opts {
 		o(options)
 	}
-
 	// TODO Context
 	return p.trellisClient.Call(ctx, in, options.GrpcCallOptions...)
 }

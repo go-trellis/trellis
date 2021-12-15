@@ -67,8 +67,8 @@ func (p *Server) Start() error {
 	}
 
 	// TODO config to new component
-	for _, s := range p.ServerConfig.Services {
-		if err := router.NewComponent(s); err != nil {
+	for _, comp := range p.ServerConfig.Components {
+		if err := router.NewComponent(comp); err != nil {
 			return err
 		}
 	}

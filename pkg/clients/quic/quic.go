@@ -4,11 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/lucas-clemente/quic-go"
-	"github.com/lucas-clemente/quic-go/http3"
 	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/node"
+
+	"github.com/lucas-clemente/quic-go"
+	"github.com/lucas-clemente/quic-go/http3"
 )
 
 var _ clients.Client = (*Client)(nil)

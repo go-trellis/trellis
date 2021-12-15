@@ -1,20 +1,3 @@
-/*
-Copyright © 2020 Henry Huang <hhh@rutcode.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
 package registry
 
 import (
@@ -22,7 +5,9 @@ import (
 
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/service"
+
 	"trellis.tech/trellis/common.v0/clients/etcd"
+	"trellis.tech/trellis/common.v0/types"
 )
 
 // NewRegistryFunc new registry function
@@ -48,11 +33,13 @@ type ProcessService interface {
 }
 
 type Config struct {
-	RegisterType   RegisterType `yaml:"register_type" json:"register_type"`
-	RegisterPrefix string       `yaml:"register_prefix" json:"register_prefix"`
+	RegisterType   RegisterType   `yaml:"register_type" json:"register_type"`
+	RegisterPrefix string         `yaml:"register_prefix" json:"register_prefix"`
+	Heartbeat      types.Duration `yaml:"heartbeat" json:"heartbeat"`
+	TTL            types.Duration `yaml:"ttl" json:"ttl"`
 
 	RegisterServices `yaml:",inline" json:",inline"`
-	WatchServices    []*WatchService `yaml:"watch_servics" json:"watch_servics"`
+	WatchServices    []*WatchService `yaml:"watch_services" json:"watch_services"`
 
 	ETCDConfig etcd.Config `yaml:"etcd_config" json:"etcd_config"`
 }
@@ -63,6 +50,8 @@ func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 		"The register type of router. 1: etcd, default: memory.")
 	cfg.RegisterType = RegisterType(*registryType)
 	f.StringVar(&cfg.RegisterPrefix, prefix+"registry.register_prefix", "/", "The register prefix.")
+	f.Var(&cfg.Heartbeat, prefix+"registry.heartbeat", "The register heartbeat.")
+	f.Var(&cfg.TTL, prefix+"registry.ttl", "The register ttl.")
 
 	cfg.ETCDConfig.ParseFlagsWithPrefix(prefix, f)
 }

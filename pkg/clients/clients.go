@@ -3,8 +3,9 @@ package clients
 import (
 	"context"
 
-	"google.golang.org/grpc"
 	"trellis.tech/trellis.v1/pkg/message"
+
+	"google.golang.org/grpc"
 )
 
 type NewOption func(*NewOptions)

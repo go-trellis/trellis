@@ -8,7 +8,7 @@ import (
 type ComponentRouter interface {
 	RegisterNewComponentFunc(s *service.Service, newFunc component.NewComponentFunc) error
 	RegisterComponent(s *service.Service, component component.Component) error
-	NewComponent(s *service.Service, opts ...component.Option) error
+	NewComponent(c *component.Config) error
 	GetComponent(*service.Service) component.Component
 	StopComponents() error
 }

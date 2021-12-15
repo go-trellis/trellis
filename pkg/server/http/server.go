@@ -87,8 +87,8 @@ func (p *Server) RegisterGroup(groupPath string, handlers ...Handler) {
 func (p *Server) Start() error {
 
 	// TODO config to new component
-	for _, s := range p.conf.Services {
-		if err := router.NewComponent(s); err != nil {
+	for _, comp := range p.conf.Components {
+		if err := router.NewComponent(comp); err != nil {
 			return err
 		}
 	}
@@ -125,11 +125,12 @@ func (p *Server) Stop() error {
 		// TODO log
 		fmt.Println(err)
 	}
-	//p.compManager.
+
 	if err := p.routes.Stop(); err != nil {
 		// TODO log
 		fmt.Println(err)
 	}
+
 	if err := p.fastServer.Shutdown(); err != nil {
 		// TODO log
 		fmt.Println(err)
