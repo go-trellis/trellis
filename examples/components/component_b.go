@@ -14,10 +14,12 @@ func init() {
 		service.NewService("trellis", "componentb", "v1"), NewComponentB)
 }
 
-type ComponentB struct{}
+type ComponentB struct {
+	conf *component.Config
+}
 
 func NewComponentB(config *component.Config) (component.Component, error) {
-	return &ComponentB{}, nil
+	return &ComponentB{conf: config}, nil
 }
 
 func (p *ComponentB) Start() error {
@@ -40,12 +42,14 @@ type RespComponentB struct {
 
 func (p *ComponentB) Route(topic string, msg *message.Payload) (interface{}, error) {
 	fmt.Println("Route", topic, msg)
+
+	srv := p.conf.Options.GetString("server")
 	req := ReqComponentB{}
 	err := msg.ToObject(&req)
 	if err != nil {
 		return nil, err
 	}
 	return &RespComponentB{
-		Message: fmt.Sprintf("Hello: %s, I am component b", req.Name),
+		Message: fmt.Sprintf("Hello: %s, I am component b: %s", req.Name, srv),
 	}, nil
 }

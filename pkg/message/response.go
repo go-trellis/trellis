@@ -3,8 +3,7 @@ package message
 import (
 	"reflect"
 
-	"trellis.tech/trellis.v1/pkg/codec"
-
+	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis/common.v0/json"
 )
 
@@ -61,7 +60,7 @@ func NewResponse(data interface{}, opts ...Option) *Response {
 		resp.ErrMsg = err.Error()
 		return resp
 	}
-	resp.Payload.Header["Content-Type"] = codec.ContentTypeJson
+	resp.Payload.Header[mime.HeaderKeyContentType] = mime.ContentTypeJson
 	resp.Payload.Body = bs
 	return resp
 }

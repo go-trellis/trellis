@@ -30,7 +30,7 @@ message Node {
     // @gotags: yaml:"ttl"
     uint64 TTL = 3;
     // @gotags: yaml:"heartbeat"
-    uint32 heartbeat = 4;
+    uint64 heartbeat = 4;
     // @gotags: yaml:"protocol"
     Protocol protocol = 5;
     // @gotags: yaml:"metadata,omitempty"

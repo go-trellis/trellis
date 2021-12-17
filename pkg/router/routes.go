@@ -2,14 +2,12 @@ package router
 
 import (
 	"sync"
-	"time"
 
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/registry/etcd"
 	"trellis.tech/trellis.v1/pkg/registry/memory"
 	"trellis.tech/trellis.v1/pkg/service"
-
 	"trellis.tech/trellis/common.v0/logger"
 )
 
@@ -29,8 +27,7 @@ func (p *routes) Start() (err error) {
 	options := []registry.Option{
 		registry.Prefix(p.conf.RegistryConfig.RegisterPrefix),
 		registry.EtcdConfig(&p.conf.RegistryConfig.ETCDConfig),
-		registry.TTL(time.Duration(p.conf.RegistryConfig.TTL)),
-		registry.Heartbeat(time.Duration(p.conf.RegistryConfig.Heartbeat)),
+		registry.RetryTimes(p.conf.RegistryConfig.RetryTimes),
 	}
 	switch p.conf.RegistryConfig.RegisterType {
 	case registry.RegisterType_etcd:
@@ -55,7 +52,7 @@ func (p *routes) Start() (err error) {
 
 	for _, s := range p.conf.RegistryConfig.WatchServices {
 		if err = p.Watch(s); err != nil {
-			return
+			return err
 		}
 	}
 	return
@@ -69,17 +66,16 @@ func (p *routes) Stop() error {
 }
 
 func (p *routes) GetServiceNode(s *service.Service, keys ...string) (*node.Node, bool) {
-	if s == nil {
-		return nil, false
-	}
 	servicePath := s.FullPath()
 	p.managerLocker.RLock()
 	manager, ok := p.nodeManagers[servicePath]
+	p.managerLocker.RUnlock()
 	if !ok {
 		return nil, false
 	}
 
-	return manager.NodeFor(keys...)
+	n, ok := manager.NodeFor(keys...)
+	return n, ok
 }
 
 func (p *routes) Register(s *service.ServiceNode) error {
@@ -104,7 +100,7 @@ func (p *routes) Watch(s *registry.WatchService) error {
 			}
 
 			servicePath := r.ServiceNode.GetService().FullPath()
-			p.managerLocker.RLocker()
+			p.managerLocker.RLock()
 			manager, ok := p.nodeManagers[servicePath]
 			p.managerLocker.RUnlock()
 
@@ -118,13 +114,15 @@ func (p *routes) Watch(s *registry.WatchService) error {
 
 			switch r.Type {
 			case service.EventType_create, service.EventType_update:
-				p.Logger.Errorf("watch_service", "add_service_node", r.ServiceNode)
+				p.Logger.Debug("watch_service", "add_service_node", r.ServiceNode)
 				manager.Add(r.ServiceNode.GetNode())
-				p.managerLocker.Unlock()
 			case service.EventType_delete:
-				p.Logger.Errorf("watch_service", "delete_service_node", r.ServiceNode)
+				p.Logger.Debug("watch_service", "delete_service_node", r.ServiceNode)
 				manager.RemoveByValue(r.ServiceNode.GetNode().GetValue())
 			}
+			p.managerLocker.RLock()
+			p.nodeManagers[servicePath] = manager
+			p.managerLocker.RUnlock()
 		}
 	}(watcher, s.NodeType)
 	return nil

@@ -1,11 +1,8 @@
 package codec
 
 import (
+	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis/common.v0/errcode"
-)
-
-const (
-	ContentTypeJson = "application/json"
 )
 
 type NewCodecFunc func() (Codec, error)
@@ -16,10 +13,10 @@ var (
 )
 
 func init() {
-	RegisterCodec(ContentTypeJson, NewJsonCodec)
+	RegisterCodec(mime.ContentTypeJson, NewJsonCodec)
 
-	jsonCodec, _ := NewCodec(ContentTypeJson)
-	defaultCodecs[ContentTypeJson] = jsonCodec
+	jsonCodec, _ := NewCodec(mime.ContentTypeJson)
+	defaultCodecs[mime.ContentTypeJson] = jsonCodec
 }
 
 type Codec interface {

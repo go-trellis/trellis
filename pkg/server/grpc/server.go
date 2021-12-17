@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -28,8 +27,7 @@ type Server struct {
 }
 
 func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
-
-	serviceNode, ok := p.routes.GetServiceNode(msg.GetService())
+	serviceNode, ok := p.routes.GetServiceNode(msg.GetService(), msg.String())
 	if !ok {
 		c, _ := local.NewClient()
 		return c.Call(ctx, msg)
@@ -87,12 +85,10 @@ func (p *Server) Start() error {
 func (p *Server) Stop() error {
 	if err := router.StopComponents(); err != nil {
 		// TODO log
-		fmt.Println(err)
 	}
 	//p.compManager.
 	if err := p.routes.Stop(); err != nil {
 		// TODO log
-		fmt.Println(err)
 	}
 	p.rpcServer.Stop()
 	return nil

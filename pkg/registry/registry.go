@@ -7,7 +7,6 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 
 	"trellis.tech/trellis/common.v0/clients/etcd"
-	"trellis.tech/trellis/common.v0/types"
 )
 
 // NewRegistryFunc new registry function
@@ -33,10 +32,9 @@ type ProcessService interface {
 }
 
 type Config struct {
-	RegisterType   RegisterType   `yaml:"register_type" json:"register_type"`
-	RegisterPrefix string         `yaml:"register_prefix" json:"register_prefix"`
-	Heartbeat      types.Duration `yaml:"heartbeat" json:"heartbeat"`
-	TTL            types.Duration `yaml:"ttl" json:"ttl"`
+	RegisterType   RegisterType `yaml:"register_type" json:"register_type"`
+	RegisterPrefix string       `yaml:"register_prefix" json:"register_prefix"`
+	RetryTimes     int          `yaml:"retry_times" json:"retry_times"`
 
 	RegisterServices `yaml:",inline" json:",inline"`
 	WatchServices    []*WatchService `yaml:"watch_services" json:"watch_services"`
@@ -50,8 +48,9 @@ func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 		"The register type of router. 1: etcd, default: memory.")
 	cfg.RegisterType = RegisterType(*registryType)
 	f.StringVar(&cfg.RegisterPrefix, prefix+"registry.register_prefix", "/", "The register prefix.")
-	f.Var(&cfg.Heartbeat, prefix+"registry.heartbeat", "The register heartbeat.")
-	f.Var(&cfg.TTL, prefix+"registry.ttl", "The register ttl.")
+	f.IntVar(&cfg.RetryTimes, prefix+"registry.retry_times", 0, "The register retry times of nodes.")
+	//f.Var(&cfg.Heartbeat, prefix+"registry.heartbeat", "The register heartbeat.")
+	//f.Var(&cfg.TTL, prefix+"registry.ttl", "The register ttl.")
 
 	cfg.ETCDConfig.ParseFlagsWithPrefix(prefix, f)
 }

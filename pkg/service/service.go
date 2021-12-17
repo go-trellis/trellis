@@ -1,6 +1,7 @@
 package service
 
 import (
+	"path/filepath"
 	"strings"
 )
 
@@ -22,22 +23,24 @@ func checkDomain(domain string) string {
 }
 
 func (m *Service) FullPath() string {
+	if m == nil {
+		return ""
+	}
 	m.Domain = checkDomain(m.GetDomain())
-	ss := []string{m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion())}
-	return strings.Join(ss, "/")
+	return filepath.Join(m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()))
 }
 
 func (m *Service) GetPath(registry string) string {
 	m.Domain = checkDomain(m.GetDomain())
-	ss := []string{registry, m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion())}
-	return strings.Join(ss, "/")
+	return filepath.Join(registry, m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()))
 }
 
 func (m *ServiceNode) RegisteredServiceNode(registry string) string {
 	m.Service.Domain = checkDomain(m.GetService().GetDomain())
-	ss := []string{registry, m.GetService().GetDomain(),
-		ReplaceURL(m.GetService().GetName()), ReplaceURL(m.GetService().GetVersion()), ReplaceURL(m.GetNode().GetValue())}
-	return strings.Join(ss, "/")
+	return filepath.Join(registry, m.GetService().GetDomain(),
+		ReplaceURL(m.GetService().GetName()),
+		ReplaceURL(m.GetService().GetVersion()),
+		ReplaceURL(m.GetNode().GetValue()))
 }
 
 // ReplaceURL replace url

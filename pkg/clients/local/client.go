@@ -3,8 +3,9 @@ package local
 import (
 	"context"
 
+	"trellis.tech/trellis.v1/pkg/mime"
+
 	"trellis.tech/trellis.v1/pkg/clients"
-	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/router"
 
@@ -37,7 +38,8 @@ func (*Client) Call(_ context.Context, in *message.Request, _ ...clients.CallOpt
 
 	if hResp == nil {
 		return &message.Response{
-			Code: 0,
+			Code:    0,
+			Payload: &message.Payload{Header: in.GetPayload().GetHeader()},
 		}, nil
 	}
 
@@ -61,12 +63,15 @@ func (*Client) Call(_ context.Context, in *message.Request, _ ...clients.CallOpt
 		if err != nil {
 			return nil, err
 		}
-		return &message.Response{
+		resp := &message.Response{
 			Code: 0,
 			Payload: &message.Payload{
-				Header: map[string]string{"Content-Type": codec.ContentTypeJson},
+				Header: in.GetPayload().GetHeader(),
 				Body:   bs,
 			},
-		}, nil
+		}
+
+		resp.Payload.Header[mime.HeaderKeyContentType] = mime.ContentTypeJson
+		return resp, nil
 	}
 }

@@ -3,6 +3,8 @@ package router
 import (
 	"flag"
 
+	"trellis.tech/trellis/common.v0/logger"
+
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
@@ -35,6 +37,7 @@ func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 func NewRouter(config Config) Router {
 	return &routes{
 		conf:         config,
+		Logger:       logger.Noop(), // todo logger
 		nodeManagers: make(map[string]node.Manager),
 	}
 }

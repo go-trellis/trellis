@@ -44,7 +44,7 @@ func newEtcdWatcher(c etcd.Clientv3Facade, e *etcdRegistry, s *service.Service) 
 		stop:       stop,
 		w:          w,
 		client:     c,
-		timeout:    e.options.Heartbeat,
+		timeout:    time.Second * 5, // todo config
 	}, nil
 }
 

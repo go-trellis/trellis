@@ -1,8 +1,6 @@
 package registry
 
 import (
-	"time"
-
 	"trellis.tech/trellis/common.v0/clients/etcd"
 )
 
@@ -13,9 +11,7 @@ type Option func(*Options)
 type Options struct {
 	Prefix     string
 	ETCDConfig *etcd.Config
-	Heartbeat  time.Duration
-	TTL        time.Duration
-	RetryTimes uint32
+	RetryTimes int
 }
 
 func Prefix(pre string) Option {
@@ -30,19 +26,7 @@ func EtcdConfig(c *etcd.Config) Option {
 	}
 }
 
-func Heartbeat(hb time.Duration) Option {
-	return func(o *Options) {
-		o.Heartbeat = hb
-	}
-}
-
-func TTL(ttl time.Duration) Option {
-	return func(o *Options) {
-		o.TTL = ttl
-	}
-}
-
-func RetryTimes(times uint32) Option {
+func RetryTimes(times int) Option {
 	return func(o *Options) {
 		o.RetryTimes = times
 	}

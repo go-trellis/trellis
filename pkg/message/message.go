@@ -1,1 +1,3 @@
 package message
+
+func NewRequest() {}

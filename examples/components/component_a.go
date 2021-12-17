@@ -1,6 +1,7 @@
 package components
 
 import (
+	"context"
 	"fmt"
 
 	"trellis.tech/trellis.v1/pkg/component"
@@ -10,14 +11,16 @@ import (
 )
 
 func init() {
-	router.RegisterComponent(
-		service.NewService("trellis", "componenta", "v1"), &ComponentA{})
+	router.RegisterNewComponentFunc(
+		service.NewService("trellis", "componenta", "v1"), NewComponentA)
 }
 
-type ComponentA struct{}
+type ComponentA struct {
+	conf *component.Config
+}
 
-func NewComponentA(config *component.Config) (component.Component, error) {
-	return &ComponentA{}, nil
+func NewComponentA(c *component.Config) (component.Component, error) {
+	return &ComponentA{conf: c}, nil
 }
 
 func (p *ComponentA) Start() error {
@@ -46,30 +49,49 @@ func (p *ComponentA) Route(topic string, msg *message.Payload) (interface{}, err
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("I am test component route", req)
-	//return nil, nil
-	//return nil, errcode.New("I am response an error")
-	//return &RespComponentA{
-	//	Message: fmt.Sprintf("Hello: %s", req.Name),
-	//}, nil
-	//return &message.Payload{
-	//	Header: map[string]string{"message": fmt.Sprintf("Hello: %s", req.Name)},
-	//	Body:   []byte("say hello"),
-	//}, nil
 
-	//return message.NewResponse(&TestResp{
-	//	Message: fmt.Sprintf("Hello: %s", req.Name),
-	//}, message.Code(401)), nil
+	switch topic {
+	case "grpc":
+		fmt.Println("I am test component route, topic: grpc", req)
+		//c, err := grpc.NewClient(&node.Node{Value: "127.0.0.1:8001"})
+		//if err != nil {
+		//	return nil, err
+		//}
+		//return c.Call(context.Background(), &message.Request{
+		//	Service: &service.Service{Domain: "trellis", Name: "componentb", Version: "v1", Topic: "test"},
+		//	Payload: msg})
 
-	return &message.Response{
-		Code: 401,
-		Payload: &message.Payload{
-			Header: map[string]string{"message": fmt.Sprintf("Hello: %s", req.Name)},
-			Body:   []byte("say hello"),
-		},
-	}, nil
+		return p.conf.TrellisServer.Call(context.Background(), &message.Request{
+			Service: &service.Service{Domain: "trellis", Name: "componentb", Version: "v1", Topic: "test"},
+			Payload: msg})
+	default:
+		fmt.Println("I am test component route, topic: default", req)
 
-	//return message.NewResponse(&TestResp{
-	//	Message: fmt.Sprintf("Hello: %s", req.Name),
-	//}, message.Code(401), message.Error(errcode.New("I am an error"))), nil
+		//return nil, nil
+		//return nil, errcode.New("I am response an error")
+		//return &RespComponentA{
+		//	Message: fmt.Sprintf("Hello: %s", req.Name),
+		//}, nil
+		//return &message.Payload{
+		//	Header: map[string]string{"message": fmt.Sprintf("Hello: %s", req.Name)},
+		//	Body:   []byte("say hello"),
+		//}, nil
+
+		//return message.NewResponse(&TestResp{
+		//	Message: fmt.Sprintf("Hello: %s", req.Name),
+		//}, message.Code(401)), nil
+
+		return &message.Response{
+			Code: 401,
+			Payload: &message.Payload{
+				Header: map[string]string{"message": fmt.Sprintf("Hello: %s", req.Name)},
+				Body:   []byte("say hello"),
+			},
+		}, nil
+
+		//return message.NewResponse(&TestResp{
+		//	Message: fmt.Sprintf("Hello: %s", req.Name),
+		//}, message.Code(401), message.Error(errcode.New("I am an error"))), nil
+
+	}
 }

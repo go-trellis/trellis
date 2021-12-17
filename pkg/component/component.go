@@ -3,6 +3,7 @@ package component
 import (
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/message"
+	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
 
 	"trellis.tech/trellis/common.v0/config"
@@ -20,5 +21,7 @@ type Component interface {
 type Config struct {
 	Service *service.Service `yaml:"service" json:"service"`
 	Options config.Config    `yaml:"options" json:"options"`
-	Logger  logger.Logger    `yaml:"-" json:"-"`
+
+	TrellisServer server.TrellisServer `yaml:"-" json:"-"`
+	Logger        logger.Logger        `yaml:"-" json:"-"`
 }

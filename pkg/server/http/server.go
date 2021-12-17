@@ -2,10 +2,14 @@ package http
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+
+	"trellis.tech/trellis.v1/pkg/mime"
 
 	"trellis.tech/trellis.v1/pkg/clients/client"
 	"trellis.tech/trellis.v1/pkg/clients/local"
@@ -88,6 +92,9 @@ func (p *Server) Start() error {
 
 	// TODO config to new component
 	for _, comp := range p.conf.Components {
+		if comp != nil {
+			comp.TrellisServer = p
+		}
 		if err := router.NewComponent(comp); err != nil {
 			return err
 		}
@@ -123,17 +130,14 @@ func (p *Server) Start() error {
 func (p *Server) Stop() error {
 	if err := router.StopComponents(); err != nil {
 		// TODO log
-		fmt.Println(err)
 	}
 
 	if err := p.routes.Stop(); err != nil {
 		// TODO log
-		fmt.Println(err)
 	}
 
 	if err := p.fastServer.Shutdown(); err != nil {
 		// TODO log
-		fmt.Println(err)
 		return err
 	}
 
@@ -146,7 +150,6 @@ func (p *Server) HandleHTTP(ctx *routing.Context) error {
 		return err
 	}
 
-	fmt.Println(*req)
 	resp, err := p.Call(context.Background(), req)
 	if err != nil {
 		return err
@@ -157,7 +160,7 @@ func (p *Server) HandleHTTP(ctx *routing.Context) error {
 
 func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
 	// TODO with keys
-	serviceNode, ok := p.routes.GetServiceNode(msg.GetService())
+	serviceNode, ok := p.routes.GetServiceNode(msg.GetService(), msg.String())
 	if !ok {
 		c, _ := local.NewClient()
 		return c.Call(ctx, msg)
@@ -177,7 +180,9 @@ func (p *Server) Route(topic string, msg *message.Payload) (interface{}, error) 
 
 func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
 
-	ct := string(ctx.Request.Header.Peek("Content-Type"))
+	ct := string(ctx.Request.Header.Peek(mime.HeaderKeyContentType))
+
+	clientIp := ClientIP(ctx.RequestCtx)
 
 	c := codec.Select(ct)
 	if c == nil {
@@ -194,11 +199,22 @@ func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
 		return nil, err
 	}
 
-	req.Payload = &message.Payload{
-		Header: map[string]string{"Content-Type": ct},
+	if req.GetPayload() == nil {
+		req.Payload = &message.Payload{}
 	}
-	req.Payload.Body = body
+	if req.GetPayload().GetHeader() == nil {
+		req.GetPayload().Header = map[string]string{}
+	}
 
+	if req.GetPayload().GetHeader()[mime.HeaderKeyTraceID] == "" {
+		req.GetPayload().Header[mime.HeaderKeyTraceID] = uuid.New().String()
+	}
+
+	req.GetPayload().Header[mime.HeaderKeyContentType] = ct
+	req.GetPayload().Header[mime.HeaderKeyClientIP] = clientIp
+	req.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.New().String()
+
+	req.Payload.Body = body
 	return req, nil
 }
 
@@ -220,9 +236,27 @@ func (*Server) parseToResponse(ctx *routing.Context, msg *message.Response) erro
 		return err
 	}
 
-	ctx.SetContentType(codec.ContentTypeJson)
+	ctx.SetContentType(mime.ContentTypeJson)
 	ctx.SetStatusCode(http.StatusOK)
 	ctx.SetBody(bs)
 
 	return nil
+}
+
+//获取真实的IP  1.1.1.1, 2.2.2.2, 3.3.3.3
+func ClientIP(ctx *fasthttp.RequestCtx) string {
+	clientIP := string(ctx.Request.Header.Peek("X-Forwarded-For"))
+	if index := strings.IndexByte(clientIP, ','); index >= 0 {
+		clientIP = clientIP[0:index]
+		//获取最开始的一个 即 1.1.1.1
+	}
+	clientIP = strings.TrimSpace(clientIP)
+	if len(clientIP) > 0 {
+		return clientIP
+	}
+	clientIP = strings.TrimSpace(string(ctx.Request.Header.Peek("X-Real-Ip")))
+	if len(clientIP) > 0 {
+		return clientIP
+	}
+	return ctx.RemoteIP().String()
 }

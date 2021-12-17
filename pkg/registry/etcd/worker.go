@@ -17,5 +17,6 @@ type worker struct {
 	// invoke self-register with ticker
 	ticker *time.Ticker
 
-	interval time.Duration
+	timeout time.Duration
+	ttl     time.Duration
 }

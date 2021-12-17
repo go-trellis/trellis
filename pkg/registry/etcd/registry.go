@@ -20,6 +20,11 @@ import (
 	"trellis.tech/trellis/common.v0/logger"
 )
 
+const (
+	defaultHeartbeat = time.Second * 5
+	defaultTimeout   = defaultHeartbeat
+)
+
 type etcdRegistry struct {
 	id      string
 	options registry.Options
@@ -103,17 +108,30 @@ func (p *etcdRegistry) Register(s *service.ServiceNode) error {
 		return nil
 	}
 
+	heartbeat := time.Duration(s.GetNode().GetHeartbeat())
+	if heartbeat <= 0 {
+		heartbeat = defaultHeartbeat
+	}
+
+	ttl := time.Duration(s.GetNode().GetTTL())
+
 	wer := &worker{
 		service:     s,
-		ticker:      time.NewTicker(p.options.Heartbeat),
+		ticker:      time.NewTicker(heartbeat),
 		fullRegPath: fullRegPath,
 		stopSignal:  make(chan bool, 1),
+		ttl:         ttl,
+		timeout:     ttl,
+	}
+
+	if ttl <= 0 {
+		wer.timeout = defaultTimeout
 	}
 
 	p.Logger.Debug("etd_register", "fullRegPath", fullRegPath, "Service", s)
 
 	go func(wr *worker) {
-		var count uint32
+		var count int
 		for {
 			if err := p.registerServiceNode(wr); err != nil {
 				p.Logger.Warn("failed_and_retry_register", "worker", wr, "error", err.Error(),
@@ -161,7 +179,7 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 
 	if !ok {
 		// minimum lease TTL is ttl-second
-		ctx, cancel := context.WithTimeout(context.Background(), p.options.TTL)
+		ctx, cancel := context.WithTimeout(context.Background(), wr.timeout)
 		defer cancel()
 		resp, err := p.client.Get(ctx, wr.fullRegPath, clientv3.WithSerializable())
 		if err != nil {
@@ -220,17 +238,21 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), p.options.TTL)
-	defer cancel()
-
 	var lgr *clientv3.LeaseGrantResponse
-	if p.options.TTL.Seconds() > 0 {
+	if wr.ttl.Seconds() > 0 {
+
+		ctx, cancel := context.WithTimeout(context.Background(), wr.ttl)
+		defer cancel()
+
 		// get a lease used to expire keys since we have a ttl
-		lgr, err = p.client.Grant(ctx, int64(p.options.TTL.Seconds()))
+		lgr, err = p.client.Grant(ctx, int64(wr.ttl.Seconds()))
 		if err != nil {
 			return err
 		}
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), wr.timeout)
+	defer cancel()
 	var putOpts []clientv3.OpOption
 	if lgr != nil {
 		putOpts = append(putOpts, clientv3.WithLease(lgr.ID))
@@ -303,7 +325,7 @@ func (p *etcdRegistry) stopWorker(w *worker) error {
 	delete(p.leases, w.fullRegPath)
 	delete(p.workers, w.fullRegPath)
 
-	ctx, cancel := context.WithTimeout(context.Background(), p.options.Heartbeat)
+	ctx, cancel := context.WithTimeout(context.Background(), w.timeout)
 	defer cancel()
 	_, err := p.client.Delete(ctx, w.fullRegPath)
 
