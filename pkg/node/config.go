@@ -3,7 +3,7 @@ package node
 import (
 	"fmt"
 
-	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v1/config"
 )
 
 // NewNodesFromConfig 同步配置文件

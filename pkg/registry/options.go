@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"trellis.tech/trellis/common.v0/clients/etcd"
+	"trellis.tech/trellis/common.v1/clients/etcd"
 )
 
 // Option initial options' functions

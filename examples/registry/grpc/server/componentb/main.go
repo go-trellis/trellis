@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v1/config"
 
 	_ "trellis.tech/trellis.v1/examples/components"
 	"trellis.tech/trellis.v1/pkg/component"
@@ -18,7 +18,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/server/grpc"
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
-	"trellis.tech/trellis/common.v0/clients/etcd"
+	"trellis.tech/trellis/common.v1/clients/etcd"
 )
 
 var (

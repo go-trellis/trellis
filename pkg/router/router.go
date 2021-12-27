@@ -3,14 +3,14 @@ package router
 import (
 	"flag"
 
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/logger"
 
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/service"
 
-	"trellis.tech/trellis/common.v0/clients/etcd"
+	"trellis.tech/trellis/common.v1/clients/etcd"
 )
 
 type Router interface {

@@ -13,11 +13,11 @@ import (
 	"github.com/mitchellh/hashstructure/v2"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"trellis.tech/trellis/common.v0/clients/etcd"
-	"trellis.tech/trellis/common.v0/crypto/base64"
-	"trellis.tech/trellis/common.v0/errcode"
-	"trellis.tech/trellis/common.v0/json"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/clients/etcd"
+	"trellis.tech/trellis/common.v1/crypto/base64"
+	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/json"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 const (

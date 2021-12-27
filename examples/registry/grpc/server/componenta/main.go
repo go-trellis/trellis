@@ -17,7 +17,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/server/http"
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
-	"trellis.tech/trellis/common.v0/clients/etcd"
+	"trellis.tech/trellis/common.v1/clients/etcd"
 )
 
 // TODO example

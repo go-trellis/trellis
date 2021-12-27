@@ -9,8 +9,8 @@ import (
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/router"
 
-	"trellis.tech/trellis/common.v0/errcode"
-	"trellis.tech/trellis/common.v0/json"
+	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/json"
 )
 
 var (

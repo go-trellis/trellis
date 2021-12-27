@@ -6,8 +6,8 @@ import (
 	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
 
-	"trellis.tech/trellis/common.v0/config"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/config"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 type NewComponentFunc func(*Config) (Component, error)

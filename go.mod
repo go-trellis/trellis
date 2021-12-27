@@ -11,6 +11,6 @@ require (
 	github.com/valyala/fasthttp v1.31.0
 	go.etcd.io/etcd/api/v3 v3.5.1
 	go.etcd.io/etcd/client/v3 v3.5.1
-	google.golang.org/grpc v1.42.0
-	trellis.tech/trellis/common.v0 v0.0.0-20211215021841-44a55e3bc9b1
+	google.golang.org/grpc v1.43.0
+	trellis.tech/trellis/common.v1 v0.0.0-20211227020933-f8812c49d40b
 )

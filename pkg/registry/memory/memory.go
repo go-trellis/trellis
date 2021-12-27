@@ -8,8 +8,8 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 
 	"github.com/google/uuid"
-	"trellis.tech/trellis/common.v0/errcode"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 var (

@@ -6,7 +6,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/service"
 
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 func TestWatcher(t *testing.T) {

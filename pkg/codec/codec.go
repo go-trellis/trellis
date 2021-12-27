@@ -2,7 +2,7 @@ package codec
 
 import (
 	"trellis.tech/trellis.v1/pkg/mime"
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v1/errcode"
 )
 
 type NewCodecFunc func() (Codec, error)

@@ -6,7 +6,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/router"
 
-	"trellis.tech/trellis/common.v0/crypto/tls"
+	"trellis.tech/trellis/common.v1/crypto/tls"
 )
 
 type ServerConfig struct {

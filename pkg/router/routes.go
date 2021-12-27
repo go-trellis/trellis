@@ -8,7 +8,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/registry/etcd"
 	"trellis.tech/trellis.v1/pkg/registry/memory"
 	"trellis.tech/trellis.v1/pkg/service"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 type routes struct {

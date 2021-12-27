@@ -4,7 +4,7 @@ import (
 	"reflect"
 
 	"trellis.tech/trellis.v1/pkg/mime"
-	"trellis.tech/trellis/common.v0/json"
+	"trellis.tech/trellis/common.v1/json"
 )
 
 type Option func(*Options)

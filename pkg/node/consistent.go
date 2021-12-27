@@ -9,7 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"trellis.tech/trellis/common.v0/types"
+	"trellis.tech/trellis/common.v1/types"
 )
 
 type consistent struct {

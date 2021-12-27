@@ -3,7 +3,7 @@ package version
 import (
 	"fmt"
 
-	"trellis.tech/trellis/common.v0/builder"
+	"trellis.tech/trellis/common.v1/builder"
 )
 
 // ShowAllInfo 展示详细信息

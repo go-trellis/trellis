@@ -22,7 +22,7 @@ import (
 
 	routing "github.com/go-trellis/fasthttp-routing"
 	"github.com/valyala/fasthttp"
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v1/errcode"
 )
 
 var (

@@ -10,7 +10,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"trellis.tech/trellis/common.v0/clients/etcd"
+	"trellis.tech/trellis/common.v1/clients/etcd"
 )
 
 type etcdWatcher struct {
