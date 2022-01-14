@@ -24,7 +24,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"trellis.tech/trellis.v0/service"
-	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v1/config"
 )
 
 func LoadCors(conf config.Config) gin.HandlerFunc {

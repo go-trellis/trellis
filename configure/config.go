@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package configure
 
-import "trellis.tech/trellis/common.v0/logger"
+import "trellis.tech/trellis/common.v1/logger"
 
 type Configure struct {
 	Project Project `json:"project" yaml:"project"`

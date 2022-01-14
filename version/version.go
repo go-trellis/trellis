@@ -20,12 +20,12 @@ package version
 import (
 	"fmt"
 
-	"trellis.tech/trellis/common.v0/builder"
+	"trellis.tech/trellis/common.v1/builder"
 )
 
 // ShowAllInfo 展示详细信息
 func ShowAllInfo() {
-	builder.Show()
+	builder.Show(builder.OnShow())
 }
 
 // Version 版本信息

@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"trellis.tech/trellis.v0/service"
-	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v1/config"
 )
 
 // Registry registry

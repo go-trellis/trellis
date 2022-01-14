@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"trellis.tech/trellis/common.v0/node"
+	"trellis.tech/trellis.v0/sd/node"
 )
 
 // CallFunc represents the individual call func

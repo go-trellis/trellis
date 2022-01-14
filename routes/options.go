@@ -19,7 +19,7 @@ package routes
 
 import (
 	"trellis.tech/trellis.v0/service/component"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 type Option func(*Options)

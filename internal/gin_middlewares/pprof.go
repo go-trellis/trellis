@@ -23,7 +23,7 @@ import (
 
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
-	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v1/config"
 )
 
 func LoadPprof(engine *gin.Engine, conf config.Config) {

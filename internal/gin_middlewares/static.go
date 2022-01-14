@@ -22,7 +22,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"trellis.tech/trellis.v0/service"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 // StatFunc log request & response

@@ -20,8 +20,8 @@ package component
 import (
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/message"
-	"trellis.tech/trellis/common.v0/config"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/config"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 // NewComponentFunc 服务对象生成函数申明

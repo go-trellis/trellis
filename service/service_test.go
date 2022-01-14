@@ -20,7 +20,7 @@ package service
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v0/testutils"
+	"trellis.tech/trellis/common.v1/testutils"
 )
 
 func TestParseService(t *testing.T) {

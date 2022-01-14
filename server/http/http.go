@@ -33,7 +33,7 @@ import (
 	"trellis.tech/trellis.v0/service"
 	"trellis.tech/trellis.v0/service/component"
 	"trellis.tech/trellis.v0/service/message"
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v1/errcode"
 )
 
 var s = &service.Service{Name: "trellis-server-http", Version: "v1"}

@@ -22,7 +22,7 @@ import (
 
 	"trellis.tech/trellis.v0/service"
 
-	"trellis.tech/trellis/common.v0/node"
+	"trellis.tech/trellis.v0/sd/node"
 )
 
 // Watcher is an interface that returns updates

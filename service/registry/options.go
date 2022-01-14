@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"trellis.tech/trellis.v0/service"
-	"trellis.tech/trellis/common.v0/logger"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 // Option initial options' functions

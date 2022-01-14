@@ -24,7 +24,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/oxtoacart/bpool"
 	"trellis.tech/trellis.v0/service/codec"
-	"trellis.tech/trellis/common.v0/json"
+	"trellis.tech/trellis/common.v1/json"
 )
 
 var jsonpbMarshaler = &jsonpb.Marshaler{}

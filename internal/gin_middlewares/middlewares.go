@@ -27,7 +27,7 @@ import (
 	"github.com/google/uuid"
 	tnet "trellis.tech/trellis.v0/internal/net"
 	"trellis.tech/trellis.v0/service"
-	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v1/config"
 )
 
 type Handler struct {

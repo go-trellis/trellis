@@ -27,9 +27,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"trellis.tech/trellis/common.v0/errcode"
-	"trellis.tech/trellis/common.v0/txorm"
-	"trellis.tech/trellis/common.v0/types"
+	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/txorm"
+	"trellis.tech/trellis/common.v1/types"
 	"xorm.io/xorm"
 
 	"trellis.tech/trellis.v0/cmd"
