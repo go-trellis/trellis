@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"trellis.tech/trellis/common.v1/config"
+
 	_ "trellis.tech/trellis.v1/examples/components"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/registry"
@@ -16,6 +18,10 @@ import (
 )
 
 func main() {
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeJSON, `{"server":"haha"}`))
+	if err != nil {
+		panic(err)
+	}
 	s, err := grpc.NewServer(trellis.ServerConfig{
 		Address: "0.0.0.0:8000",
 		RouterConfig: router.Config{
@@ -31,6 +37,7 @@ func main() {
 		Components: []*component.Config{
 			&component.Config{
 				Service: service.NewService("trellis", "componentb", "v1"),
+				Options: cfg,
 			},
 		},
 	})

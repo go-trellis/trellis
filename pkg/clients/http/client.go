@@ -11,6 +11,7 @@ import (
 
 	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/message"
+	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis.v1/pkg/node"
 
 	"trellis.tech/trellis/common.v1/errcode"
@@ -34,19 +35,21 @@ func (p *Client) Call(ctx context.Context, in *message.Request) (*message.Respon
 		return nil, err
 	}
 
+	req.Header.Set(mime.HeaderKeyContentType, mime.ContentTypeJson)
+
 	hResp, err := p.hc.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer hResp.Body.Close()
 
-	if hResp.StatusCode != 200 {
-		return nil, errcode.Newf("status code not 200, but %d", hResp.StatusCode)
-	}
-
 	body, err := ioutil.ReadAll(hResp.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	if hResp.StatusCode != 200 {
+		return nil, errcode.Newf("status code not 200, but %d, body: %s", hResp.StatusCode, string(body))
 	}
 
 	msg := &message.Response{}
