@@ -8,18 +8,14 @@ import (
 	"trellis.tech/trellis/common.v1/crypto/tls"
 )
 
-//
-//type CallOption func(*CallOptions)
-//type CallOptions struct {
-//	GrpcCallOptions []grpc.CallOption
-//}
-
 type Config struct {
 	GrpcPool      *GrpcPoolConfig      `yaml:"grpc_pool" json:"grpc_pool"`
 	GrpcKeepalive *GrpcKeepaliveConfig `yaml:"grpc_keepalive" json:"grpc_keepalive"`
 
 	TlsEnable bool        `yaml:"tls_enable" json:"tls_enable"`
 	TlsConfig *tls.Config `yaml:"tls_config" json:"tls_config"`
+
+	// todo http config
 }
 
 type GrpcPoolConfig struct {

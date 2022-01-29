@@ -43,7 +43,6 @@ type RespComponentA struct {
 }
 
 func (p *ComponentA) Route(topic string, msg *message.Payload) (interface{}, error) {
-	fmt.Println("Route", topic, msg)
 	req := ReqComponentA{}
 	err := msg.ToObject(&req)
 	if err != nil {

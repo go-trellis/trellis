@@ -10,6 +10,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis.v1/pkg/service"
+	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/json"
 )
 
@@ -17,7 +18,7 @@ var c = http.Client{}
 
 func main() {
 	cc := map[string]int{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		r := Call()
 		cc[r]++
 	}
@@ -50,6 +51,12 @@ func Call() string {
 	}
 
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		err = errcode.Newf("code not 200, but %d", resp.StatusCode)
+		log.Println(err)
+		return err.Error()
+	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

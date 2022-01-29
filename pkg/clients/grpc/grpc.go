@@ -22,7 +22,7 @@ var _ clients.Client = (*Client)(nil)
 
 type Client struct {
 	nd   *node.Node
-	pool pool.Pool
+	Pool pool.Pool
 
 	dialOptions []grpc.DialOption
 }
@@ -32,8 +32,8 @@ func (p *Client) Call(ctx context.Context, in *message.Request) (resp *message.R
 	var (
 		cc *grpc.ClientConn
 	)
-	if p.pool != nil {
-		c, err := p.pool.Get()
+	if p.Pool != nil {
+		c, err := p.Pool.Get()
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +43,7 @@ func (p *Client) Call(ctx context.Context, in *message.Request) (resp *message.R
 		if !ok {
 			return nil, errcode.New("not found client in pool")
 		}
-		defer p.pool.Put(cc)
+		defer p.Pool.Put(cc)
 	} else {
 
 		cc, err = grpc.Dial(p.nd.Value, p.dialOptions...)
@@ -69,6 +69,7 @@ func NewClient(nd *node.Node) (c *Client, err error) {
 	}
 
 	watchServiceConfig, ok := nd.Get("watch_service_config")
+
 	if !ok {
 		client.dialOptions = append(client.dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		return client, nil
@@ -78,19 +79,6 @@ func NewClient(nd *node.Node) (c *Client, err error) {
 	if !ok || metadata.ClientConfig == nil {
 		client.dialOptions = append(client.dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		return client, nil
-	}
-
-	if metadata.ClientConfig.GrpcPool != nil && metadata.ClientConfig.GrpcPool.Enable {
-		var opts = []pool.Option{
-			pool.OptionFactory(client.poolFactory),
-			pool.OptionClose(client.poolClose),
-			pool.MaxIdle(metadata.ClientConfig.GrpcPool.MaxIdle),
-			pool.MaxCap(metadata.ClientConfig.GrpcPool.MaxCap),
-			pool.IdleTimeout(metadata.ClientConfig.GrpcPool.IdleTimeout),
-			pool.InitialCap(metadata.ClientConfig.GrpcPool.InitialCap),
-		}
-
-		client.pool, err = pool.NewPool(opts...)
 	}
 
 	if metadata.ClientConfig.GrpcKeepalive != nil {
@@ -111,6 +99,22 @@ func NewClient(nd *node.Node) (c *Client, err error) {
 		client.dialOptions = append(client.dialOptions, grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)))
 	} else {
 		client.dialOptions = append(client.dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	if metadata.ClientConfig.GrpcPool != nil && metadata.ClientConfig.GrpcPool.Enable {
+		var opts = []pool.Option{
+			pool.OptionFactory(client.poolFactory),
+			pool.OptionClose(client.poolClose),
+			pool.MaxIdle(metadata.ClientConfig.GrpcPool.MaxIdle),
+			pool.MaxCap(metadata.ClientConfig.GrpcPool.MaxCap),
+			pool.IdleTimeout(metadata.ClientConfig.GrpcPool.IdleTimeout),
+			pool.InitialCap(metadata.ClientConfig.GrpcPool.InitialCap),
+		}
+
+		client.Pool, err = pool.NewPool(opts...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return client, nil

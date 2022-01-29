@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/message"
@@ -17,17 +19,17 @@ import (
 var _ clients.Client = (*Client)(nil)
 
 type Client struct {
-	hc *http.Client
-	nd *node.Node
+	hc   *http.Client
+	nd   *node.Node
+	urlP *url.URL
 }
 
 func (p *Client) Call(ctx context.Context, in *message.Request) (*message.Response, error) {
-
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	bs, _ := json.Marshal(in)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, in.GetService().String(), bytes.NewBuffer(bs))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.urlP.String(), bytes.NewBuffer(bs))
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +58,25 @@ func (p *Client) Call(ctx context.Context, in *message.Request) (*message.Respon
 }
 
 // NewClient construct http instance
-// TODO node.Metadata to http config
+// TODO node.Metadata to http client config
 func NewClient(nd *node.Node) (*Client, error) {
 	if nd == nil {
 		return nil, errcode.New("nil node")
 	}
+	urlP, err := url.Parse(getURL(nd.Value))
+	if err != nil {
+		return nil, err
+	}
 	return &Client{
-		hc: &http.Client{},
-		nd: nd,
+		hc:   &http.Client{},
+		nd:   nd,
+		urlP: urlP,
 	}, nil
+}
+
+func getURL(url string) string {
+	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+		return url
+	}
+	return "http://" + url
 }
