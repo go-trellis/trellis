@@ -7,6 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	"google.golang.org/grpc/peer"
+
+	"github.com/google/uuid"
+	"trellis.tech/trellis.v1/pkg/mime"
+
 	"trellis.tech/trellis.v1/pkg/clients/client"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/router"
@@ -40,6 +45,27 @@ func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Respo
 		return nil, err
 	}
 	// TODO Options
+
+	if msg.GetPayload().GetHeader() == nil {
+		msg.GetPayload().Header = map[string]string{}
+	}
+
+	ip, _ := peer.FromContext(ctx)
+
+	if ip != nil {
+		if msg.GetPayload().Header[mime.HeaderKeyClientIP] == "" {
+			msg.GetPayload().Header[mime.HeaderKeyClientIP] = ip.Addr.String()
+		}
+		msg.GetPayload().Header[mime.HeaderKeyRequestIP] = ip.Addr.String()
+	}
+
+	msg.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.New().String()
+
+	if msg.GetPayload().GetHeader()[mime.HeaderKeyTraceID] == "" {
+		msg.GetPayload().Header[mime.HeaderKeyTraceID] = uuid.New().String()
+	}
+
+	msg.GetPayload().Set(mime.HeaderKeyRequestID, uuid.New().String())
 	return c.Call(ctx, msg)
 }
 

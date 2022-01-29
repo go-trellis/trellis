@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sync"
+	"time"
 
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/mime"
@@ -14,15 +16,26 @@ import (
 	"trellis.tech/trellis/common.v1/json"
 )
 
-var c = http.Client{}
+var (
+	c  = http.Client{}
+	mu = sync.Mutex{}
+)
 
 func main() {
 	cc := map[string]int{}
+	ch := make(chan int, 100)
 	for i := 0; i < 10000; i++ {
-		r := Call()
-		cc[r]++
+		ch <- i
+		go func(i int) {
+			r := Call()
+			mu.Lock()
+			cc[r]++
+			mu.Unlock()
+			<-ch
+		}(i)
 	}
 
+	time.Sleep(time.Second)
 	fmt.Println(cc)
 }
 
@@ -72,6 +85,5 @@ func Call() string {
 		return r["message"].(string)
 	}
 
-	log.Fatalln("non-expect response", string(respBody))
-	return ""
+	return string(respBody)
 }

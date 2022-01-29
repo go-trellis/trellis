@@ -208,7 +208,10 @@ func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
 	}
 
 	req.GetPayload().Header[mime.HeaderKeyContentType] = ct
-	req.GetPayload().Header[mime.HeaderKeyClientIP] = clientIp
+	if req.GetPayload().Header[mime.HeaderKeyClientIP] == "" {
+		req.GetPayload().Header[mime.HeaderKeyClientIP] = clientIp
+	}
+	req.GetPayload().Header[mime.HeaderKeyRequestIP] = clientIp
 	req.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.New().String()
 
 	req.Payload.Body = body

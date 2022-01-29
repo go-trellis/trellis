@@ -40,10 +40,11 @@ func main() {
 								GrpcPool: &clients.GrpcPoolConfig{
 									Enable:      true,
 									InitialCap:  10,
-									MaxCap:      30,
-									MaxIdle:     10,
+									MaxCap:      50,
+									MaxIdle:     50,
 									IdleTimeout: 10 * time.Second,
 								},
+								// 客户端如果没有在一定时间内使用，那么会释放链接
 								GrpcKeepalive: &clients.GrpcKeepaliveConfig{
 									Time:    5 * time.Second,
 									Timeout: time.Second,

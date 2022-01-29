@@ -2,8 +2,10 @@ package message
 
 import (
 	"trellis.tech/trellis.v1/pkg/codec"
+	"trellis.tech/trellis.v1/pkg/mime"
 
 	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/json"
 )
 
 func (m *Payload) ContentType() string {
@@ -56,4 +58,22 @@ func (m *Payload) SetBody(model interface{}) (err error) {
 	}
 	m.Body, err = c.Marshal(model)
 	return err
+}
+
+func (m *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
+	header := m.GetHeader()
+	if header == nil {
+		return nil, errcode.New("nil header")
+	}
+
+	bs, err := json.Marshal(header)
+	if err != nil {
+		return nil, err
+	}
+
+	info := &mime.TraceInfo{}
+	if err = json.Unmarshal(bs, info); err != nil {
+		return nil, err
+	}
+	return info, nil
 }
