@@ -3,10 +3,9 @@ package local
 import (
 	"context"
 
-	"trellis.tech/trellis.v1/pkg/mime"
-
 	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/message"
+	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis.v1/pkg/router"
 
 	"trellis.tech/trellis/common.v1/errcode"
@@ -21,11 +20,11 @@ var (
 
 type Client struct{}
 
-func NewClient() (clients.Client, error) {
+func NewClient() (*Client, error) {
 	return c, nil
 }
 
-func (*Client) Call(_ context.Context, in *message.Request, _ ...clients.CallOption) (*message.Response, error) {
+func (*Client) Call(_ context.Context, in *message.Request) (*message.Response, error) {
 	comp := router.GetComponent(in.GetService())
 	if comp == nil {
 		return nil, errcode.Newf("not found component: %s", in.GetService().FullPath())

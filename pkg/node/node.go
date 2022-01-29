@@ -2,7 +2,14 @@ package node
 
 import (
 	"fmt"
+
+	"trellis.tech/trellis/common.v1/config"
 )
+
+type Node struct {
+	BaseNode `yaml:",inline" json:",inline"`
+	Metadata config.Options `yaml:"metadata" json:"metadata"`
+}
 
 // Get value from metadata
 func (p *Node) Get(key string) (interface{}, bool) {
@@ -14,9 +21,9 @@ func (p *Node) Get(key string) (interface{}, bool) {
 }
 
 // Set kv pair from metadata
-func (p *Node) Set(key string, value string) {
+func (p *Node) Set(key string, value interface{}) {
 	if p.Metadata == nil {
-		p.Metadata = make(map[string]string)
+		p.Metadata = make(map[string]interface{})
 	}
 	p.Metadata[key] = value
 }

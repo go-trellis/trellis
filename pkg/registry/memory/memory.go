@@ -57,13 +57,13 @@ func (p *memory) Start() error {
 func (p *memory) Register(s *service.ServiceNode) error {
 	p.Lock()
 	defer p.Unlock()
-	serviceName := s.GetService().GetPath(p.prefix)
+	serviceName := s.Service.GetPath(p.prefix)
 	nodes, ok := p.services[serviceName]
 	if !ok || nodes == nil {
 		nodes = make(map[string]*service.ServiceNode)
 	}
 
-	nodeID := service.ReplaceURL(s.GetNode().GetValue())
+	nodeID := service.ReplaceURL(s.Node.GetValue())
 	nodes[nodeID] = s
 
 	p.services[serviceName] = nodes
@@ -80,13 +80,13 @@ func (p *memory) Register(s *service.ServiceNode) error {
 func (p *memory) Deregister(s *service.ServiceNode) error {
 	p.Lock()
 	defer p.Unlock()
-	serviceName := s.GetService().GetPath(p.prefix)
+	serviceName := s.Service.GetPath(p.prefix)
 	nodes, ok := p.services[serviceName]
 	if !ok {
 		return nil
 	}
 
-	nodeID := service.ReplaceURL(s.GetNode().GetValue())
+	nodeID := service.ReplaceURL(s.Node.GetValue())
 	if _, ok := nodes[nodeID]; ok {
 		delete(p.services[serviceName], nodeID)
 	}

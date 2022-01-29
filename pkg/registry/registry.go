@@ -31,6 +31,10 @@ type ProcessService interface {
 	Watch(*service.Service) (Watcher, error)
 }
 
+type RegisterServices struct {
+	RegisterServiceNodes []*service.ServiceNode
+}
+
 type Config struct {
 	RegisterType   RegisterType `yaml:"register_type" json:"register_type"`
 	RegisterPrefix string       `yaml:"register_prefix" json:"register_prefix"`

@@ -3,6 +3,8 @@ package service
 import (
 	"path/filepath"
 	"strings"
+
+	"trellis.tech/trellis.v1/pkg/node"
 )
 
 const DefaultDomain = "/trellis"
@@ -35,12 +37,17 @@ func (m *Service) GetPath(registry string) string {
 	return filepath.Join(registry, m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()))
 }
 
+type ServiceNode struct {
+	Service *Service
+	Node    *node.Node
+}
+
 func (m *ServiceNode) RegisteredServiceNode(registry string) string {
-	m.Service.Domain = checkDomain(m.GetService().GetDomain())
-	return filepath.Join(registry, m.GetService().GetDomain(),
-		ReplaceURL(m.GetService().GetName()),
-		ReplaceURL(m.GetService().GetVersion()),
-		ReplaceURL(m.GetNode().GetValue()))
+	m.Service.Domain = checkDomain(m.Service.GetDomain())
+	return filepath.Join(registry, m.Service.GetDomain(),
+		ReplaceURL(m.Service.GetName()),
+		ReplaceURL(m.Service.GetVersion()),
+		ReplaceURL(m.Node.GetValue()))
 }
 
 // ReplaceURL replace url

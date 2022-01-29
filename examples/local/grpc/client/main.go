@@ -18,17 +18,22 @@ type Response struct {
 
 func main() {
 	c, err := grpc.NewClient(&node.Node{
-		Value: "127.0.0.1:8000",
+		BaseNode: node.BaseNode{
+			Value: "127.0.0.1:8000",
+		},
 	})
 	if err != nil {
 		panic(err)
 	}
-	resp, err := c.Call(context.Background(), &message.Request{
-		Service: service.NewService("trellis", "componentb", "v1"),
-		Payload: &message.Payload{
-			Header: map[string]string{"Content-Type": "application/json"}, Body: []byte(`{"name":"haha", "age": 10}`),
-		},
-	})
+	resp, err := c.Call(context.Background(),
+
+		&message.Request{
+			Service: service.NewService("trellis", "componentb", "v1"),
+			Payload: &message.Payload{
+				Header: map[string]string{"Content-Type": "application/json"},
+				Body:   []byte(`{"name":"haha", "age": 10}`),
+			},
+		})
 	if err != nil {
 		panic(err)
 	}

@@ -42,11 +42,13 @@ func main() {
 						&service.ServiceNode{
 							Service: service.NewService("trellis", "componentb", "v1"),
 							Node: &node.Node{
-								Weight:    512,
-								Value:     srv,
-								TTL:       uint64(time.Second * 10),
-								Heartbeat: uint64(time.Second * 5),
-								Protocol:  node.Protocol_GRPC,
+								BaseNode: node.BaseNode{
+									Weight:    1024,
+									Value:     srv,
+									TTL:       uint64(time.Second * 10),
+									Heartbeat: uint64(time.Second * 5),
+									Protocol:  node.Protocol_GRPC,
+								},
 							},
 						},
 					},

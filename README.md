@@ -1,5 +1,7 @@
-# TODO
+# trellis
 
-* GetNodes() to get one node before calling server
-* Transport to rpc (Protocol)
-* registry looper
+## TODO
+
+* Logger
+* clients cache
+* config from file

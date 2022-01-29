@@ -4,7 +4,7 @@ package service;
 
 option go_package = "trellis.tech/trellis.v1/pkg/service;service";
 
-import "trellis.tech/trellis.v1/proto/node.proto";
+// import "trellis.tech/trellis.v1/proto/node.proto";
 
 message Service {
     // @gotags: yaml:"domain,omitempty"
@@ -17,12 +17,12 @@ message Service {
     string topic = 4;
 }
 
-message ServiceNode {
-    // @gotags: yaml:"service,omitempty"
-    Service service = 1;
-    // @gotags: yaml:"node"
-    node.Node node = 2;
-}
+// message ServiceNode {
+//     // @gotags: yaml:"service,omitempty"
+//     Service service = 1;
+//     // @gotags: yaml:"node"
+//     node.Node node = 2;
+// }
 
 enum EventType {
     create = 0;

@@ -28,10 +28,9 @@ func NewNodes(cfg config.Config) (ms map[string]Manager, err error) {
 		nodesCfg := valConfigs.GetValuesConfig(key + ".nodes")
 
 		for _, nKey := range nodesCfg.GetKeys() {
-			item := &Node{
-				Value:  nodesCfg.GetString(nKey + ".value"),
-				Weight: uint32(nodesCfg.GetInt(nKey + ".weight")),
-			}
+			item := &Node{}
+			item.BaseNode.Value = nodesCfg.GetString(nKey + ".value")
+			item.BaseNode.Weight = uint32(nodesCfg.GetInt(nKey + ".weight"))
 			for k, v := range nodesCfg.GetMap(nKey + ".metadata") {
 				if v == nil {
 					continue

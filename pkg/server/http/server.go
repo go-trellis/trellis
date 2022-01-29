@@ -12,7 +12,6 @@ import (
 	"trellis.tech/trellis.v1/pkg/mime"
 
 	"trellis.tech/trellis.v1/pkg/clients/client"
-	"trellis.tech/trellis.v1/pkg/clients/local"
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
@@ -31,7 +30,7 @@ var (
 )
 
 type Server struct {
-	conf trellis.ServerConfig `yaml:"server_config" json:"server_config"`
+	conf trellis.ServerConfig
 
 	fastServer *fasthttp.Server
 	fastRouter *routing.Router
@@ -159,11 +158,9 @@ func (p *Server) HandleHTTP(ctx *routing.Context) error {
 }
 
 func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
-	// TODO with keys
 	serviceNode, ok := p.routes.GetServiceNode(msg.GetService(), msg.String())
 	if !ok {
-		c, _ := local.NewClient()
-		return c.Call(ctx, msg)
+		// TODO warn Log
 	}
 
 	c, err := client.New(serviceNode)
@@ -174,7 +171,7 @@ func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Respo
 	return c.Call(ctx, msg)
 }
 
-func (p *Server) Route(topic string, msg *message.Payload) (interface{}, error) {
+func (p *Server) Route(_topic string, _payload *message.Payload) (interface{}, error) {
 	return nil, nil
 }
 
@@ -243,7 +240,7 @@ func (*Server) parseToResponse(ctx *routing.Context, msg *message.Response) erro
 	return nil
 }
 
-//获取真实的IP  1.1.1.1, 2.2.2.2, 3.3.3.3
+// ClientIP 获取真实的IP  1.1.1.1, 2.2.2.2, 3.3.3.3
 func ClientIP(ctx *fasthttp.RequestCtx) string {
 	clientIP := string(ctx.Request.Header.Peek("X-Forwarded-For"))
 	if index := strings.IndexByte(clientIP, ','); index >= 0 {

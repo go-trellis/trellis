@@ -25,7 +25,7 @@ func (p *Watcher) Next() (*registry.Result, error) {
 		select {
 		case r := <-p.res:
 			if p.serv != nil && p.serv.Name != "" &&
-				p.serv.GetPath(p.prefix) != r.ServiceNode.GetService().GetPath(p.prefix) {
+				p.serv.GetPath(p.prefix) != r.ServiceNode.Service.GetPath(p.prefix) {
 				continue
 			}
 

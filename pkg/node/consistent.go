@@ -101,8 +101,8 @@ func (p *consistent) Remove() {
 }
 
 func (p *consistent) remove() {
-	p.hashes = nil
-	p.nodes = nil
+	p.hashes = make(map[uint32]*Node)
+	p.nodes = make(map[string]*Node)
 	p.updateRings()
 }
 

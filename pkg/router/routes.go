@@ -87,7 +87,7 @@ func (p *routes) Deregister(s *service.ServiceNode) error {
 }
 
 func (p *routes) Watch(s *registry.WatchService) error {
-	watcher, err := p.Registry.Watch(s.GetService())
+	watcher, err := p.Registry.Watch(s.Service)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (p *routes) Watch(s *registry.WatchService) error {
 				continue
 			}
 
-			servicePath := r.ServiceNode.GetService().FullPath()
+			servicePath := r.ServiceNode.Service.FullPath()
 			p.managerLocker.RLock()
 			manager, ok := p.nodeManagers[servicePath]
 			p.managerLocker.RUnlock()
@@ -112,13 +112,17 @@ func (p *routes) Watch(s *registry.WatchService) error {
 				}
 			}
 
+			if s.Metadata != nil {
+				r.ServiceNode.Node.Set("watch_service_config", s.Metadata)
+			}
+
 			switch r.Type {
 			case service.EventType_create, service.EventType_update:
 				p.Logger.Debug("watch_service", "add_service_node", r.ServiceNode)
-				manager.Add(r.ServiceNode.GetNode())
+				manager.Add(r.ServiceNode.Node)
 			case service.EventType_delete:
 				p.Logger.Debug("watch_service", "delete_service_node", r.ServiceNode)
-				manager.RemoveByValue(r.ServiceNode.GetNode().GetValue())
+				manager.RemoveByValue(r.ServiceNode.Node.GetValue())
 			}
 			p.managerLocker.RLock()
 			p.nodeManagers[servicePath] = manager

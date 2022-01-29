@@ -3,6 +3,8 @@ package registry
 import (
 	"time"
 
+	"trellis.tech/trellis.v1/pkg/clients"
+	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/service"
 )
 
@@ -24,4 +26,15 @@ type Result struct {
 	Timestamp time.Time
 	// ServiceNode is registered service node
 	ServiceNode *service.ServiceNode
+}
+
+type WatchService struct {
+	Service  *service.Service `yaml:"service" json:"service"`
+	NodeType node.NodeType    `yaml:"node_type" json:"node_type"`
+
+	Metadata *WatchServiceMetadata `yaml:"metadata" json:"metadata"`
+}
+
+type WatchServiceMetadata struct {
+	ClientConfig *clients.Config `yaml:"client_config" json:"client_config"`
 }

@@ -95,7 +95,7 @@ func (p *etcdRegistry) String() string {
 }
 
 func (p *etcdRegistry) Register(s *service.ServiceNode) error {
-	if s.GetService() == nil || s.GetService().GetName() == "" {
+	if s.Service == nil || s.Service.GetName() == "" {
 		return errcode.New("service name not found")
 	}
 
@@ -108,12 +108,12 @@ func (p *etcdRegistry) Register(s *service.ServiceNode) error {
 		return nil
 	}
 
-	heartbeat := time.Duration(s.GetNode().GetHeartbeat())
+	heartbeat := time.Duration(s.Node.GetHeartbeat())
 	if heartbeat <= 0 {
 		heartbeat = defaultHeartbeat
 	}
 
-	ttl := time.Duration(s.GetNode().GetTTL())
+	ttl := time.Duration(s.Node.GetTTL())
 
 	wer := &worker{
 		service:     s,
@@ -166,8 +166,8 @@ func (p *etcdRegistry) Register(s *service.ServiceNode) error {
 }
 
 func (p *etcdRegistry) registerServiceNode(wr *worker) error {
-	if wr == nil || wr.service == nil || wr.service.GetService().GetName() == "" ||
-		wr.service.GetNode() == nil || wr.service.GetNode().GetValue() == "" {
+	if wr == nil || wr.service == nil || wr.service.Service.GetName() == "" ||
+		wr.service.Node == nil || wr.service.Node.GetValue() == "" {
 		return errcode.New("node should not be nil")
 	}
 
@@ -278,7 +278,7 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 
 //
 func (p *etcdRegistry) Deregister(s *service.ServiceNode) error {
-	if s.GetService().GetName() == "" {
+	if s.Service.GetName() == "" {
 		return errcode.New("service name not found")
 	}
 
@@ -312,7 +312,7 @@ func (p *etcdRegistry) Stop() error {
 	return nil
 }
 
-func (p etcdRegistry) Start() error {
+func (p *etcdRegistry) Start() error {
 	return nil
 }
 

@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"sync"
 
 	"trellis.tech/trellis.v1/pkg/component"
@@ -71,7 +70,6 @@ func (p *compRouter) NewComponent(c *component.Config) error {
 	}
 	p.mu.RUnlock()
 
-	fmt.Println("haha", c.TrellisServer)
 	comp, err := newFunc(c)
 	if err != nil {
 		return err

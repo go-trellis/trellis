@@ -6,10 +6,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	routing "github.com/go-trellis/fasthttp-routing"
-
 	_ "trellis.tech/trellis.v1/examples/components"
+	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
@@ -18,6 +19,7 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
 	"trellis.tech/trellis/common.v1/clients/etcd"
+	"trellis.tech/trellis/common.v1/crypto/tls"
 )
 
 // TODO example
@@ -33,6 +35,31 @@ func main() {
 					&registry.WatchService{
 						Service:  service.NewService("trellis", "componentb", "v1"),
 						NodeType: node.NodeType_Consistent,
+						Metadata: &registry.WatchServiceMetadata{
+							ClientConfig: &clients.Config{
+								GrpcPool: &clients.GrpcPoolConfig{
+									Enable:      true,
+									InitialCap:  10,
+									MaxCap:      30,
+									MaxIdle:     10,
+									IdleTimeout: 10 * time.Second,
+								},
+								GrpcKeepalive: &clients.GrpcKeepaliveConfig{
+									Time:    5 * time.Second,
+									Timeout: time.Second,
+
+									PermitWithoutStream: true,
+								},
+								TlsEnable: false,
+								TlsConfig: &tls.Config{
+									CertPath:           "",
+									KeyPath:            "",
+									CAPath:             "",
+									ServerName:         "",
+									InsecureSkipVerify: true,
+								},
+							},
+						},
 					},
 				},
 			},

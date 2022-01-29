@@ -22,7 +22,24 @@ enum Protocol {
     QUIC = 3;
 }
 
-message Node {
+// message Node {
+//     // @gotags: yaml:"weight"
+//     uint32 weight = 1;
+//     // @gotags: yaml:"value"
+//     string value = 2;
+//     // @gotags: yaml:"ttl"
+//     uint64 TTL = 3;
+//     // @gotags: yaml:"heartbeat"
+//     uint64 heartbeat = 4;
+//     // @gotags: yaml:"protocol"
+//     Protocol protocol = 5;
+//     // @gotags: yaml:"metadata,omitempty"
+//     map<string, string> metadata = 6;
+//     // @gotags: protobuf:"-" json:"-" yaml:"-"
+//     uint32 Number = 7;
+// }
+
+message BaseNode {
     // @gotags: yaml:"weight"
     uint32 weight = 1;
     // @gotags: yaml:"value"
@@ -33,8 +50,6 @@ message Node {
     uint64 heartbeat = 4;
     // @gotags: yaml:"protocol"
     Protocol protocol = 5;
-    // @gotags: yaml:"metadata,omitempty"
-    map<string, string> metadata = 6;
     // @gotags: protobuf:"-" json:"-" yaml:"-"
-    uint32 Number = 7;
+    uint32 Number = 6;
 }
