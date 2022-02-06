@@ -32,7 +32,7 @@ type ProcessService interface {
 }
 
 type RegisterServices struct {
-	RegisterServiceNodes []*service.ServiceNode
+	RegisterServiceNodes []*service.ServiceNode `yaml:"register_service_nodes" json:"register_service_nodes"`
 }
 
 type Config struct {
@@ -56,5 +56,5 @@ func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	//f.Var(&cfg.Heartbeat, prefix+"registry.heartbeat", "The register heartbeat.")
 	//f.Var(&cfg.TTL, prefix+"registry.ttl", "The register ttl.")
 
-	cfg.ETCDConfig.ParseFlagsWithPrefix(prefix, f)
+	cfg.ETCDConfig.ParseFlagsWithPrefix(prefix+"registry.", f)
 }

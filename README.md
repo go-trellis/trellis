@@ -3,5 +3,7 @@
 ## TODO
 
 * Logger
-* clients cache
-* config from file
+* Server Metrics
+* ~~clients cache~~ **done**
+* ~~config from file~~ **done**
+* ~~client call option~~ **done**

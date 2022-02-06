@@ -24,41 +24,39 @@ import (
 
 // TODO example
 func main() {
-	s, err := http.NewServer(trellis.ServerConfig{
-		Address: "0.0.0.0:8000",
-		RouterConfig: router.Config{
-			RegistryConfig: registry.Config{
-				RegisterType:     registry.RegisterType_etcd,
-				RegisterPrefix:   "/trellis",
-				RegisterServices: registry.RegisterServices{},
-				WatchServices: []*registry.WatchService{
-					&registry.WatchService{
-						Service:  service.NewService("trellis", "componentb", "v1"),
-						NodeType: node.NodeType_Consistent,
-						Metadata: &registry.WatchServiceMetadata{
-							ClientConfig: &clients.Config{
-								GrpcPool: &clients.GrpcPoolConfig{
-									Enable:      true,
-									InitialCap:  10,
-									MaxCap:      50,
-									MaxIdle:     50,
-									IdleTimeout: 10 * time.Second,
-								},
-								// 客户端如果没有在一定时间内使用，那么会释放链接
-								GrpcKeepalive: &clients.GrpcKeepaliveConfig{
-									Time:    5 * time.Second,
-									Timeout: time.Second,
 
-									PermitWithoutStream: true,
-								},
-								TlsEnable: false,
-								TlsConfig: &tls.Config{
-									CertPath:           "",
-									KeyPath:            "",
-									CAPath:             "",
-									ServerName:         "",
-									InsecureSkipVerify: true,
-								},
+	r, err := router.NewRouter(router.Config{
+		RegistryConfig: registry.Config{
+			RegisterType:     registry.RegisterType_etcd,
+			RegisterPrefix:   "/trellis",
+			RegisterServices: registry.RegisterServices{},
+			WatchServices: []*registry.WatchService{
+				&registry.WatchService{
+					Service:  service.NewService("trellis", "componentb", "v1"),
+					NodeType: node.NodeType_Consistent,
+					Metadata: &registry.WatchServiceMetadata{
+						ClientConfig: &clients.Config{
+							GrpcPool: &clients.GrpcPoolConfig{
+								Enable:      true,
+								InitialCap:  10,
+								MaxCap:      50,
+								MaxIdle:     50,
+								IdleTimeout: 10 * time.Second,
+							},
+							// 客户端如果没有在一定时间内使用，那么会释放链接
+							GrpcKeepalive: &clients.GrpcKeepaliveConfig{
+								Time:    5 * time.Second,
+								Timeout: time.Second,
+
+								PermitWithoutStream: true,
+							},
+							TlsEnable: false,
+							TlsConfig: &tls.Config{
+								CertPath:           "",
+								KeyPath:            "",
+								CAPath:             "",
+								ServerName:         "",
+								InsecureSkipVerify: true,
 							},
 						},
 					},
@@ -74,19 +72,25 @@ func main() {
 				//Username    string           `yaml:"username" json:"username"`
 				//Password    types.Secret     `yaml:"password" json:"password"`
 			},
-			//Logger: logger.Noop(),
 		},
-		Components: []*component.Config{
-			&component.Config{
-				Service: service.NewService("trellis", "componenta", "v1"),
-			},
+		//Logger: logger.Noop(),
+		Components: component.Configs{
+			&component.Config{Service: service.NewService("trellis", "componenta", "v1")},
 		},
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	s.RegisterHandler(http.Handler{
+	s, err := http.NewServer(
+		http.Config(&trellis.HTTPServerConfig{Address: "0.0.0.0:8000"}),
+		http.Router(r),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	s.RegisterHandler(&http.Handler{
 		Method: "POST",
 		Path:   "/v1",
 		Uses: []routing.Handler{

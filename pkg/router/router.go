@@ -3,14 +3,14 @@ package router
 import (
 	"flag"
 
-	"trellis.tech/trellis/common.v1/logger"
-
+	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
+	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
 
-	"trellis.tech/trellis/common.v1/clients/etcd"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 type Router interface {
@@ -21,23 +21,36 @@ type Router interface {
 	Watch(s *registry.WatchService) error
 
 	GetServiceNode(s *service.Service, keys ...string) (*node.Node, bool)
+
+	server.TrellisServer
 }
 
 type Config struct {
-	RegistryConfig registry.Config `yaml:"registry_config" json:"registry_config"`
-	ETCDConfig     etcd.Config     `yaml:"etcd_config" json:"etcd_config"`
+	RegistryConfig registry.Config   `yaml:"registry_config" json:"registry_config"`
+	Components     component.Configs `yaml:"components" json:"components"`
 }
 
 // ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
 func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
-	cfg.RegistryConfig.ParseFlagsWithPrefix(prefix, f)
-	cfg.ETCDConfig.ParseFlagsWithPrefix(prefix, f)
+	cfg.RegistryConfig.ParseFlagsWithPrefix(prefix+"router.", f)
 }
 
-func NewRouter(config Config) Router {
-	return &routes{
-		conf:         config,
+func NewRouter(c Config) (Router, error) {
+	r := &routes{
+		conf:         c,
 		Logger:       logger.Noop(), // todo logger
 		nodeManagers: make(map[string]node.Manager),
 	}
+
+	for _, compCfg := range c.Components {
+		if compCfg.TrellisServer == nil {
+			compCfg.TrellisServer = r
+		}
+
+		if err := component.NewComponent(compCfg); err != nil {
+			return nil, err
+		}
+	}
+
+	return r, nil
 }

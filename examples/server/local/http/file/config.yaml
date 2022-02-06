@@ -1,0 +1,28 @@
+type: 0
+address: 0.0.0.0:8000
+
+http_server_config:
+  groups:
+    - path: /v1
+      handlers:
+        -
+          method: POST
+          path: ""
+          uses: ["use1"]
+  handlers:
+    - method: POST
+      path: "/v1"
+      uses: [ "use1" ]
+      handler: ""
+
+router_config:
+  registry_config:
+    prefix: /trellis
+  components:
+    -
+      service:
+        domain: trellis
+        name: componentb
+        version: v1
+      options:
+        server: haha

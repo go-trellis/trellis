@@ -37,7 +37,7 @@ func NewRegistry(l logger.Logger, opts ...registry.Option) (registry.Registry, e
 	}
 
 	r := &memory{
-		id: uuid.New().String(),
+		id: uuid.NewString(),
 
 		prefix: options.Prefix,
 
@@ -111,7 +111,7 @@ func (p *memory) Watch(s *service.Service) (registry.Watcher, error) {
 	}
 
 	w := &Watcher{
-		id:     uuid.New().String(),
+		id:     uuid.NewString(),
 		exit:   make(chan bool),
 		res:    make(chan *registry.Result),
 		prefix: p.prefix,

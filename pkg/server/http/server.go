@@ -7,19 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
-	"trellis.tech/trellis.v1/pkg/mime"
-
 	"trellis.tech/trellis.v1/pkg/clients/client"
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
+	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/trellis"
 
 	routing "github.com/go-trellis/fasthttp-routing"
+	"github.com/google/uuid"
 	"github.com/valyala/fasthttp"
 	"trellis.tech/trellis/common.v1/errcode"
 )
@@ -30,25 +28,27 @@ var (
 )
 
 type Server struct {
-	conf trellis.ServerConfig
+	conf *trellis.HTTPServerConfig
 
 	fastServer *fasthttp.Server
 	fastRouter *routing.Router
 
-	routes router.Router
+	router router.Router
 }
 
-func NewServer(conf trellis.ServerConfig) (*Server, error) {
+func NewServer(opts ...Option) (*Server, error) {
 	s := &Server{
-		conf: conf,
-
-		routes: router.NewRouter(conf.RouterConfig),
-
 		fastRouter: routing.New(),
 	}
 
-	if err := s.routes.Start(); err != nil {
-		return nil, err
+	for _, o := range opts {
+		o(s)
+	}
+
+	if s.router != nil {
+		if err := s.router.Start(); err != nil {
+			return nil, err
+		}
 	}
 
 	return s, nil
@@ -61,7 +61,7 @@ type Handler struct {
 	Handler routing.Handler
 }
 
-func (p *Server) RegisterHandler(handlers ...Handler) {
+func (p *Server) RegisterHandler(handlers ...*Handler) {
 	for _, handler := range handlers {
 		var fastHandlers = handler.Uses
 		if handler.Handler == nil {
@@ -69,12 +69,11 @@ func (p *Server) RegisterHandler(handlers ...Handler) {
 		} else {
 			fastHandlers = append(fastHandlers, handler.Handler)
 		}
-
 		p.fastRouter.To(handler.Method, handler.Path, fastHandlers...)
 	}
 }
 
-func (p *Server) RegisterGroup(groupPath string, handlers ...Handler) {
+func (p *Server) RegisterGroup(groupPath string, handlers ...*Handler) {
 	group := p.fastRouter.Group(groupPath)
 	for _, handler := range handlers {
 		var fastHandlers = handler.Uses
@@ -89,16 +88,6 @@ func (p *Server) RegisterGroup(groupPath string, handlers ...Handler) {
 
 func (p *Server) Start() error {
 
-	// TODO config to new component
-	for _, comp := range p.conf.Components {
-		if comp != nil {
-			comp.TrellisServer = p
-		}
-		if err := router.NewComponent(comp); err != nil {
-			return err
-		}
-	}
-
 	p.fastServer = &fasthttp.Server{
 		Handler: p.fastRouter.HandleRequest,
 
@@ -108,7 +97,6 @@ func (p *Server) Start() error {
 	}
 
 	go func() {
-
 		var err error
 		if p.conf.EnableTLS {
 			err = p.fastServer.ListenAndServeTLS(p.conf.Address, p.conf.TLSConfig.CertPath, p.conf.TLSConfig.KeyPath)
@@ -127,11 +115,11 @@ func (p *Server) Start() error {
 }
 
 func (p *Server) Stop() error {
-	if err := router.StopComponents(); err != nil {
+	if err := component.StopComponents(); err != nil {
 		// TODO log
 	}
 
-	if err := p.routes.Stop(); err != nil {
+	if err := p.router.Stop(); err != nil {
 		// TODO log
 	}
 
@@ -158,7 +146,7 @@ func (p *Server) HandleHTTP(ctx *routing.Context) error {
 }
 
 func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
-	serviceNode, ok := p.routes.GetServiceNode(msg.GetService(), msg.String())
+	serviceNode, ok := p.router.GetServiceNode(msg.GetService(), msg.String())
 	if !ok {
 		// TODO warn Log
 	}
@@ -204,7 +192,7 @@ func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
 	}
 
 	if req.GetPayload().GetHeader()[mime.HeaderKeyTraceID] == "" {
-		req.GetPayload().Header[mime.HeaderKeyTraceID] = uuid.New().String()
+		req.GetPayload().Header[mime.HeaderKeyTraceID] = uuid.NewString()
 	}
 
 	req.GetPayload().Header[mime.HeaderKeyContentType] = ct
@@ -212,9 +200,9 @@ func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
 		req.GetPayload().Header[mime.HeaderKeyClientIP] = clientIp
 	}
 	req.GetPayload().Header[mime.HeaderKeyRequestIP] = clientIp
-	req.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.New().String()
-
-	req.Payload.Body = body
+	req.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.NewString()
+	//
+	//req.Payload.Body = body
 	return req, nil
 }
 

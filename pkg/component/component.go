@@ -18,9 +18,19 @@ type Component interface {
 	Route(topic string, payload *message.Payload) (interface{}, error)
 }
 
+type Router interface {
+	RegisterNewComponentFunc(s *service.Service, newFunc NewComponentFunc) error
+	RegisterComponent(s *service.Service, component Component) error
+	NewComponent(c *Config) error
+	GetComponent(*service.Service) Component
+	StopComponents() error
+}
+
+type Configs []*Config
+
 type Config struct {
 	Service *service.Service `yaml:"service" json:"service"`
-	Options config.Config    `yaml:"options" json:"options"`
+	Options config.Options   `yaml:"options" json:"options"`
 
 	TrellisServer server.TrellisServer `yaml:"-" json:"-"`
 	Logger        logger.Logger        `yaml:"-" json:"-"`

@@ -47,7 +47,7 @@ type etcdRegistry struct {
 func NewRegistry(l logger.Logger, opts ...registry.Option) (registry.Registry, error) {
 
 	p := &etcdRegistry{
-		id: uuid.New().String(),
+		id: uuid.NewString(),
 
 		Logger: l,
 

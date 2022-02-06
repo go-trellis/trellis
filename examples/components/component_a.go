@@ -6,12 +6,11 @@ import (
 
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
-	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/service"
 )
 
 func init() {
-	router.RegisterNewComponentFunc(
+	component.RegisterNewComponentFunc(
 		service.NewService("trellis", "componenta", "v1"), NewComponentA)
 }
 
@@ -43,7 +42,6 @@ type RespComponentA struct {
 }
 
 func (p *ComponentA) Route(topic string, msg *message.Payload) (interface{}, error) {
-	fmt.Println(msg)
 	req := ReqComponentA{}
 	err := msg.ToObject(&req)
 	if err != nil {

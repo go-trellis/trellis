@@ -30,31 +30,28 @@ func main() {
 	flag.StringVar(&srv, "srv", "0.0.0.0:8001", "server address")
 	flag.Parse()
 
-	options := config.Options{"server": srv}
-	s, err := grpc.NewServer(trellis.ServerConfig{
-		Address: srv,
-		RouterConfig: router.Config{
-			RegistryConfig: registry.Config{
-				RegisterType:   registry.RegisterType_etcd,
-				RegisterPrefix: "/trellis",
-				RegisterServices: registry.RegisterServices{
-					RegisterServiceNodes: []*service.ServiceNode{
-						&service.ServiceNode{
-							Service: service.NewService("trellis", "componentb", "v1"),
-							Node: &node.Node{
-								BaseNode: node.BaseNode{
-									Weight:    1024,
-									Value:     srv,
-									TTL:       uint64(time.Second * 10),
-									Heartbeat: uint64(time.Second * 5),
-									Protocol:  node.Protocol_GRPC,
-								},
+	r, err := router.NewRouter(router.Config{
+		RegistryConfig: registry.Config{
+			RegisterType:   registry.RegisterType_etcd,
+			RegisterPrefix: "/trellis",
+			RegisterServices: registry.RegisterServices{
+				RegisterServiceNodes: []*service.ServiceNode{
+					&service.ServiceNode{
+						Service: service.NewService("trellis", "componentb", "v1"),
+						Node: &node.Node{
+							BaseNode: node.BaseNode{
+								Weight:    1024,
+								Value:     srv,
+								TTL:       uint64(time.Second * 10),
+								Heartbeat: uint64(time.Second * 5),
+								Protocol:  node.Protocol_GRPC,
 							},
+							Metadata: map[string]interface{}{"a": "b"},
 						},
 					},
 				},
-				WatchServices: []*registry.WatchService{},
 			},
+			WatchServices: []*registry.WatchService{},
 			ETCDConfig: etcd.Config{
 
 				//Endpoints: []string{"127.0.0.1:2379"},
@@ -65,15 +62,23 @@ func main() {
 				//Username    string           `yaml:"username" json:"username"`
 				//Password    types.Secret     `yaml:"password" json:"password"`
 			},
-			//Logger: logger.Noop(),
 		},
+
 		Components: []*component.Config{
 			&component.Config{
 				Service: service.NewService("trellis", "componentb", "v1"),
-				Options: options.ToConfig(),
+				Options: config.Options{"server": srv},
 			},
 		},
+		//Logger: logger.Noop(),
 	})
+	if err != nil {
+		panic(err)
+	}
+
+	s, err := grpc.NewServer(
+		grpc.Config(&trellis.GrpcServerConfig{Address: srv}),
+		grpc.Router(r))
 	if err != nil {
 		panic(err)
 	}

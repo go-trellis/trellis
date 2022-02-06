@@ -1,34 +1,29 @@
-package router
+package component
 
 import (
 	"sync"
 
-	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/service"
 
 	"trellis.tech/trellis/common.v1/errcode"
 )
 
 var compR = &compRouter{
-	newFuncs:   make(map[string]component.NewComponentFunc),
-	components: make(map[string]component.Component),
+	newFuncs:   make(map[string]NewComponentFunc),
+	components: make(map[string]Component),
 }
 
-var _ ComponentRouter = (*compRouter)(nil)
-
-func GetComponentRouter() ComponentRouter {
-	return compR
-}
+var _ Router = (*compRouter)(nil)
 
 type compRouter struct {
 	mu sync.RWMutex
 	// map[service]Component
-	newFuncs map[string]component.NewComponentFunc
+	newFuncs map[string]NewComponentFunc
 
-	components map[string]component.Component
+	components map[string]Component
 }
 
-func (p *compRouter) RegisterNewComponentFunc(s *service.Service, newFunc component.NewComponentFunc) error {
+func (p *compRouter) RegisterNewComponentFunc(s *service.Service, newFunc NewComponentFunc) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if newFunc == nil {
@@ -42,7 +37,7 @@ func (p *compRouter) RegisterNewComponentFunc(s *service.Service, newFunc compon
 	return nil
 }
 
-func (p *compRouter) RegisterComponent(s *service.Service, comp component.Component) error {
+func (p *compRouter) RegisterComponent(s *service.Service, comp Component) error {
 	if comp == nil {
 		p.mu.Lock()
 		delete(p.components, s.FullPath())
@@ -61,7 +56,7 @@ func (p *compRouter) RegisterComponent(s *service.Service, comp component.Compon
 	return comp.Start()
 }
 
-func (p *compRouter) NewComponent(c *component.Config) error {
+func (p *compRouter) NewComponent(c *Config) error {
 	p.mu.RLock()
 	newFunc, ok := p.newFuncs[c.Service.FullPath()]
 	if !ok {
@@ -78,7 +73,7 @@ func (p *compRouter) NewComponent(c *component.Config) error {
 	return p.RegisterComponent(c.Service, comp)
 }
 
-func (p *compRouter) GetComponent(s *service.Service) component.Component {
+func (p *compRouter) GetComponent(s *service.Service) Component {
 	p.mu.RLock()
 	comp := p.components[s.FullPath()]
 	p.mu.RUnlock()
@@ -87,16 +82,16 @@ func (p *compRouter) GetComponent(s *service.Service) component.Component {
 
 func (p *compRouter) StopComponents() error {
 	p.mu.Lock()
-	p.newFuncs = make(map[string]component.NewComponentFunc)
+	p.newFuncs = make(map[string]NewComponentFunc)
 	components := p.components
-	p.components = make(map[string]component.Component)
+	p.components = make(map[string]Component)
 	p.mu.Unlock()
 
 	var errs errcode.Errors
 	wg := sync.WaitGroup{}
 	for _, comp := range components {
 		wg.Add(1)
-		go func(comp component.Component) {
+		go func(comp Component) {
 			defer wg.Done()
 			err := comp.Stop()
 			if err != nil {
@@ -108,23 +103,23 @@ func (p *compRouter) StopComponents() error {
 	return errs.Errors()
 }
 
-func RegisterNewComponentFunc(s *service.Service, newFunc component.NewComponentFunc) {
+func RegisterNewComponentFunc(s *service.Service, newFunc NewComponentFunc) {
 	if err := compR.RegisterNewComponentFunc(s, newFunc); err != nil {
 		panic(err)
 	}
 }
 
-func RegisterComponent(s *service.Service, comp component.Component) {
+func RegisterComponent(s *service.Service, comp Component) {
 	if err := compR.RegisterComponent(s, comp); err != nil {
 		panic(err)
 	}
 }
 
-func GetComponent(s *service.Service) component.Component {
+func GetComponent(s *service.Service) Component {
 	return compR.GetComponent(s)
 }
 
-func NewComponent(c *component.Config) error {
+func NewComponent(c *Config) error {
 	return compR.NewComponent(c)
 }
 

@@ -1,13 +1,17 @@
 package router
 
 import (
+	"context"
 	"sync"
 
+	"trellis.tech/trellis.v1/pkg/clients/client"
+	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/registry/etcd"
 	"trellis.tech/trellis.v1/pkg/registry/memory"
 	"trellis.tech/trellis.v1/pkg/service"
+
 	"trellis.tech/trellis/common.v1/logger"
 )
 
@@ -130,4 +134,18 @@ func (p *routes) Watch(s *registry.WatchService) error {
 		}
 	}(watcher, s.NodeType)
 	return nil
+}
+
+func (p *routes) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
+	serviceNode, ok := p.GetServiceNode(msg.GetService(), msg.String())
+	if !ok {
+		// TODO warn Log
+	}
+
+	c, err := client.New(serviceNode)
+	if err != nil {
+		return nil, err
+	}
+	// TODO Options
+	return c.Call(ctx, msg)
 }

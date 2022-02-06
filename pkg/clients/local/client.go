@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"trellis.tech/trellis.v1/pkg/clients"
+	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/mime"
-	"trellis.tech/trellis.v1/pkg/router"
-
 	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/json"
 )
@@ -25,7 +24,7 @@ func NewClient() (*Client, error) {
 }
 
 func (*Client) Call(_ context.Context, in *message.Request) (*message.Response, error) {
-	comp := router.GetComponent(in.GetService())
+	comp := component.GetComponent(in.GetService())
 	if comp == nil {
 		return nil, errcode.Newf("not found component: %s", in.GetService().FullPath())
 	}

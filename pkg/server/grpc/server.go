@@ -5,7 +5,8 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"time"
+
+	"trellis.tech/trellis.v1/pkg/component"
 
 	"google.golang.org/grpc/peer"
 
@@ -26,16 +27,16 @@ import (
 var _ server.Server = (*Server)(nil)
 
 type Server struct {
-	ServerConfig trellis.ServerConfig
+	conf *trellis.GrpcServerConfig
 
 	rpcServer *grpc.Server
 
-	routes router.Router
+	router router.Router
 }
 
 func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
 
-	serviceNode, ok := p.routes.GetServiceNode(msg.GetService(), msg.String())
+	serviceNode, ok := p.router.GetServiceNode(msg.GetService(), msg.String())
 	if !ok {
 		// TODO warn Log
 	}
@@ -44,7 +45,6 @@ func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Respo
 	if err != nil {
 		return nil, err
 	}
-	// TODO Options
 
 	if msg.GetPayload().GetHeader() == nil {
 		msg.GetPayload().Header = map[string]string{}
@@ -59,42 +59,42 @@ func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Respo
 		msg.GetPayload().Header[mime.HeaderKeyRequestIP] = ip.Addr.String()
 	}
 
-	msg.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.New().String()
+	msg.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.NewString()
 
 	if msg.GetPayload().GetHeader()[mime.HeaderKeyTraceID] == "" {
-		msg.GetPayload().Header[mime.HeaderKeyTraceID] = uuid.New().String()
+		msg.GetPayload().Header[mime.HeaderKeyTraceID] = uuid.NewString()
 	}
 
-	msg.GetPayload().Set(mime.HeaderKeyRequestID, uuid.New().String())
+	msg.GetPayload().Set(mime.HeaderKeyRequestID, uuid.NewString())
 	return c.Call(ctx, msg)
 }
 
-func NewServer(conf trellis.ServerConfig) (*Server, error) {
-	s := &Server{
-		ServerConfig: conf,
+func NewServer(opts ...Option) (*Server, error) {
+	s := &Server{}
 
-		routes: router.NewRouter(conf.RouterConfig),
+	for _, o := range opts {
+		o(s)
 	}
 
 	var sopts []grpc.ServerOption
 
-	if conf.GrpcServerConfig.KeepaliveTime > 0 {
+	if s.conf.KeepaliveTime > 0 {
 		sopts = append(sopts, grpc.KeepaliveParams(keepalive.ServerParameters{
-			Time:    time.Duration(conf.GrpcServerConfig.KeepaliveTime),
-			Timeout: time.Duration(conf.GrpcServerConfig.KeepaliveTimeout),
+			Time:    s.conf.KeepaliveTime,
+			Timeout: s.conf.KeepaliveTimeout,
 		}))
 	}
 
-	if conf.GrpcServerConfig.ConnectionTimeout > 0 {
-		sopts = append(sopts, grpc.ConnectionTimeout(time.Duration(conf.GrpcServerConfig.ConnectionTimeout)))
+	if s.conf.ConnectionTimeout > 0 {
+		sopts = append(sopts, grpc.ConnectionTimeout(s.conf.ConnectionTimeout))
 	}
 
-	if conf.GrpcServerConfig.NumStreamWorkers > 0 {
-		sopts = append(sopts, grpc.NumStreamWorkers(conf.GrpcServerConfig.NumStreamWorkers))
+	if s.conf.NumStreamWorkers > 0 {
+		sopts = append(sopts, grpc.NumStreamWorkers(s.conf.NumStreamWorkers))
 	}
 
-	if conf.EnableTLS {
-		tls, err := conf.TLSConfig.GetTLSConfig()
+	if s.conf.EnableTLS {
+		tls, err := s.conf.TLSConfig.GetTLSConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +103,7 @@ func NewServer(conf trellis.ServerConfig) (*Server, error) {
 
 	s.rpcServer = grpc.NewServer(sopts...)
 
-	if err := s.routes.Start(); err != nil {
+	if err := s.router.Start(); err != nil {
 		return nil, err
 	}
 
@@ -113,14 +113,7 @@ func NewServer(conf trellis.ServerConfig) (*Server, error) {
 
 func (p *Server) Start() error {
 
-	// TODO config to new component
-	for _, comp := range p.ServerConfig.Components {
-		if err := router.NewComponent(comp); err != nil {
-			return err
-		}
-	}
-
-	listen, err := net.Listen("tcp", p.ServerConfig.Address)
+	listen, err := net.Listen("tcp", p.conf.Address)
 	if err != nil {
 		return err
 	}
@@ -138,11 +131,11 @@ func (p *Server) Start() error {
 }
 
 func (p *Server) Stop() error {
-	if err := router.StopComponents(); err != nil {
+	if err := component.StopComponents(); err != nil {
 		// TODO log
 	}
 	//p.compManager.
-	if err := p.routes.Stop(); err != nil {
+	if err := p.router.Stop(); err != nil {
 		// TODO log
 	}
 	p.rpcServer.Stop()

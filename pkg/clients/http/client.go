@@ -30,6 +30,7 @@ func (p *Client) Call(ctx context.Context, in *message.Request) (*message.Respon
 		ctx = context.Background()
 	}
 	bs, _ := json.Marshal(in)
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.urlP.String(), bytes.NewBuffer(bs))
 	if err != nil {
 		return nil, err

@@ -5,12 +5,11 @@ import (
 
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
-	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/service"
 )
 
 func init() {
-	router.RegisterNewComponentFunc(
+	component.RegisterNewComponentFunc(
 		service.NewService("trellis", "componentb", "v1"), NewComponentB)
 }
 
@@ -34,6 +33,7 @@ func (p *ComponentB) Stop() error {
 
 type ReqComponentB struct {
 	Name string `json:"name"`
+	Age  int    `json:"age"`
 }
 
 type RespComponentB struct {
@@ -42,12 +42,13 @@ type RespComponentB struct {
 
 func (p *ComponentB) Route(topic string, msg *message.Payload) (interface{}, error) {
 	fmt.Println(msg.GetTraceInfo())
-	srv := p.conf.Options.GetString("server")
+	srv := p.conf.Options["server"]
 	req := ReqComponentB{}
 	err := msg.ToObject(&req)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(req)
 	return &RespComponentB{
 		Message: fmt.Sprintf("Hello: %s, I am component b: %s", req.Name, srv),
 	}, nil

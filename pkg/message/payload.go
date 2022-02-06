@@ -8,60 +8,52 @@ import (
 	"trellis.tech/trellis/common.v1/json"
 )
 
-func (m *Payload) ContentType() string {
-	header := m.GetHeader()
+func (x *Payload) ContentType() string {
+	header := x.GetHeader()
 	if header == nil {
 		return ""
 	}
 	return header["Content-Type"]
 }
 
-func (m *Payload) ToObject(model interface{}) error {
-	if m == nil {
-		return nil
+func (x *Payload) ToObject(model interface{}) error {
+	c, err := x.getCodec()
+	if err != nil {
+		return err
 	}
 
-	ct := m.ContentType()
-	c := codec.Select(ct)
-	if c == nil {
-		return errcode.Newf("not supported content-type: %q", ct)
-	}
-	return c.Unmarshal(m.GetBody(), model)
+	return c.Unmarshal(x.GetBody(), model)
 }
 
-func (m *Payload) Set(k, v string) {
-	if m.Header == nil {
-		m.Header = make(map[string]string)
+func (x *Payload) Set(k, v string) {
+	if x.Header == nil {
+		x.Header = make(map[string]string)
 	}
-	m.Header[k] = v
+	x.Header[k] = v
 }
 
-func (m *Payload) Get(k string) string {
-	if m == nil {
+func (x *Payload) Get(k string) string {
+	if x == nil {
 		return ""
 	}
-	if m.Header == nil {
+	if x.Header == nil {
 		return ""
 	}
-	return m.Header[k]
+	return x.Header[k]
 }
 
-func (m *Payload) SetBody(model interface{}) (err error) {
-	if m == nil {
-		return nil
+func (x *Payload) SetBody(model interface{}) (err error) {
+	c, err := x.getCodec()
+	if err != nil {
+		return err
 	}
 
-	ct := m.ContentType()
-	c := codec.Select(ct)
-	if c == nil {
-		return errcode.Newf("not supported content-type: %q", ct)
-	}
-	m.Body, err = c.Marshal(model)
+	x.Body, err = c.Marshal(model)
 	return err
 }
 
-func (m *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
-	header := m.GetHeader()
+func (x *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
+	header := x.GetHeader()
 	if header == nil {
 		return nil, errcode.New("nil header")
 	}
@@ -76,4 +68,14 @@ func (m *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
 		return nil, err
 	}
 	return info, nil
+}
+
+func (x *Payload) getCodec() (codec.Codec, error) {
+
+	ct := x.ContentType()
+	c := codec.Select(ct)
+	if c == nil {
+		return nil, errcode.Newf("not supported content-type: %q", ct)
+	}
+	return c, nil
 }
