@@ -7,16 +7,17 @@ option go_package = "trellis.tech/trellis.v1/pkg/server;server";
 import "trellis.tech/trellis.v1/proto/message.proto";
 
 enum Type {
-    HTTP = 0;
-    GRPC = 1;
+    All  = 0;
+    HTTP = 1;
+    GRPC = 2;
 }
 
 // Poster is the micro client interface
 service Trellis {
     // Call allows a single request to be made
     rpc Call(message.Request) returns (message.Response) {};
-    //    // Stream is a bidirectional stream
-    //    rpc Stream(stream message.Request) returns (stream message.Response) {};
+    // Stream is a bidirectional stream
+    rpc Stream(stream message.Request) returns (stream message.Response) {};
     //    // Publish publishes a payload and returns an empty payload
     //    rpc Publish(message.Payload) returns (message.Payload) {};
 }

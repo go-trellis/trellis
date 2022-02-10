@@ -33,5 +33,5 @@ type GrpcKeepaliveConfig struct {
 }
 
 type Client interface {
-	Call(context.Context, *message.Request) (*message.Response, error)
+	Call(context.Context, *message.Request, ...CallOption) (*message.Response, error)
 }

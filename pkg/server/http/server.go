@@ -1,13 +1,10 @@
 package http
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
-	"trellis.tech/trellis.v1/pkg/clients/client"
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
@@ -18,6 +15,9 @@ import (
 
 	routing "github.com/go-trellis/fasthttp-routing"
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	opentracingLog "github.com/opentracing/opentracing-go/log"
 	"github.com/valyala/fasthttp"
 	"trellis.tech/trellis/common.v1/errcode"
 )
@@ -28,12 +28,16 @@ var (
 )
 
 type Server struct {
+	name string // Server Name
+
 	conf *trellis.HTTPServerConfig
 
 	fastServer *fasthttp.Server
 	fastRouter *routing.Router
 
 	router router.Router
+
+	tracing bool
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -43,6 +47,24 @@ func NewServer(opts ...Option) (*Server, error) {
 
 	for _, o := range opts {
 		o(s)
+	}
+
+	var hs []*Handler
+	for _, hCfg := range s.conf.Handlers {
+		h, err := getHTTPHandler(hCfg)
+		if err != nil {
+			return nil, err
+		}
+		hs = append(hs, h)
+	}
+	s.RegisterHandler(hs...)
+
+	for _, group := range s.conf.Groups {
+		hgs, err := getHTTPGroupHandlers(group)
+		if err != nil {
+			return nil, err
+		}
+		s.RegisterGroup(group.Path, hgs...)
 	}
 
 	if s.router != nil {
@@ -91,9 +113,9 @@ func (p *Server) Start() error {
 	p.fastServer = &fasthttp.Server{
 		Handler: p.fastRouter.HandleRequest,
 
-		DisableKeepalive: true,
+		DisableKeepalive: p.conf.DisableKeepAlive,
 		//CloseOnShutdown:  true,
-		IdleTimeout: time.Second * 30,
+		IdleTimeout: p.conf.IdleTimeout,
 	}
 
 	go func() {
@@ -131,39 +153,63 @@ func (p *Server) Stop() error {
 	return nil
 }
 
-func (p *Server) HandleHTTP(ctx *routing.Context) error {
-	req, err := p.parseToRequest(ctx)
+func (p *Server) HandleHTTP(ctx *routing.Context) (err error) {
+
+	var span opentracing.Span
+
+	//opentracing.GlobalTracer()
+	if opentracing.IsGlobalTracerRegistered() {
+
+		span, _ = opentracing.StartSpanFromContext(ctx, p.name)
+
+		ext.HTTPUrl.Set(span, ctx.Request.URI().String())
+		ext.HTTPMethod.Set(span, string(ctx.Request.Header.Method()))
+		ext.Component.Set(span, p.name)
+
+		headers := http.Header{}
+		ctx.RequestCtx.Request.Header.VisitAllInOrder(p.visitor(headers))
+		opentracing.GlobalTracer().Inject(span.Context(),
+			opentracing.HTTPHeaders,
+			opentracing.HTTPHeadersCarrier(headers),
+		)
+
+		defer func() {
+			ext.HTTPStatusCode.Set(span, uint16(ctx.Response.StatusCode()))
+			if err != nil {
+				ext.Error.Set(span, true)
+				span.LogFields(opentracingLog.String("handler call error", err.Error()))
+			}
+			span.Finish()
+		}()
+	}
+
+	var msg *message.Request
+	msg, err = p.parseToRequest(ctx, span)
 	if err != nil {
 		return err
 	}
 
-	resp, err := p.Call(context.Background(), req)
+	var resp *message.Response
+	resp, err = p.router.Call(ctx, msg)
 	if err != nil {
 		return err
 	}
 
-	return p.parseToResponse(ctx, resp)
+	err = p.parseToResponse(ctx, resp)
+	return
 }
 
-func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
-	serviceNode, ok := p.router.GetServiceNode(msg.GetService(), msg.String())
-	if !ok {
-		// TODO warn Log
+func (*Server) visitor(header http.Header) func(key, value []byte) {
+	return func(key, value []byte) {
+		header.Add(string(key), string(value))
 	}
-
-	c, err := client.New(serviceNode)
-	if err != nil {
-		return nil, err
-	}
-	// TODO Options
-	return c.Call(ctx, msg)
 }
 
 func (p *Server) Route(_topic string, _payload *message.Payload) (interface{}, error) {
 	return nil, nil
 }
 
-func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
+func (*Server) parseToRequest(ctx *routing.Context, span opentracing.Span) (*message.Request, error) {
 
 	ct := string(ctx.Request.Header.Peek(mime.HeaderKeyContentType))
 
@@ -201,8 +247,10 @@ func (*Server) parseToRequest(ctx *routing.Context) (*message.Request, error) {
 	}
 	req.GetPayload().Header[mime.HeaderKeyRequestIP] = clientIp
 	req.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.NewString()
-	//
-	//req.Payload.Body = body
+
+	if span != nil {
+		// todo added tags
+	}
 	return req, nil
 }
 

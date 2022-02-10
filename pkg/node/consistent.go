@@ -63,9 +63,9 @@ func (p *consistent) add(pNode *Node) {
 	for i := uint32(0); i < pNode.Weight; i++ {
 		crc32Hash := p.genKey(pNode.Value, int(i+1))
 		if p.hashes[crc32Hash] == nil {
-			vnode := *pNode
+			vnode := pNode.Copy()
 			vnode.Number = i + 1
-			p.hashes[crc32Hash] = &vnode
+			p.hashes[crc32Hash] = vnode
 		}
 	}
 
@@ -166,13 +166,13 @@ func (p *consistent) genKey(elt string, idx int) uint32 {
 }
 
 func (p *consistent) PrintNodes() {
-	p.RLock()
-	defer p.RUnlock()
+	p.Lock()
+	defer p.Unlock()
 
 	for i, v := range p.nodes {
-		fmt.Println("nodes:", i, *v)
+		fmt.Println("nodes:", i, v.Copy())
 	}
 	for i, v := range p.hashes {
-		fmt.Printf("hashes: %11.d: %v\n", i, *v)
+		fmt.Printf("hashes: %11.d: %v\n", i, v.Copy())
 	}
 }

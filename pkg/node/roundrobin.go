@@ -127,10 +127,10 @@ func (p *roundrobin) removeKey(key string) {
 }
 
 func (p *roundrobin) PrintNodes() {
-	p.RLock()
-	defer p.RUnlock()
+	p.Lock()
+	defer p.Unlock()
 
 	for i, v := range p.nodes {
-		fmt.Println("nodes:", i, *v)
+		fmt.Println("nodes:", i, v.Copy())
 	}
 }

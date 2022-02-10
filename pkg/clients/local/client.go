@@ -19,11 +19,11 @@ var (
 
 type Client struct{}
 
-func NewClient() (*Client, error) {
-	return c, nil
+func NewClient() (*Client, []clients.CallOption, error) {
+	return c, nil, nil
 }
 
-func (*Client) Call(_ context.Context, in *message.Request) (*message.Response, error) {
+func (*Client) Call(_ context.Context, in *message.Request, _ ...clients.CallOption) (*message.Response, error) {
 	comp := component.GetComponent(in.GetService())
 	if comp == nil {
 		return nil, errcode.Newf("not found component: %s", in.GetService().FullPath())

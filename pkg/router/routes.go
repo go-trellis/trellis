@@ -4,14 +4,19 @@ import (
 	"context"
 	"sync"
 
+	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/clients/client"
+	"trellis.tech/trellis.v1/pkg/clients/local"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/registry/etcd"
 	"trellis.tech/trellis.v1/pkg/registry/memory"
+	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"trellis.tech/trellis/common.v1/logger"
 )
 
@@ -137,15 +142,23 @@ func (p *routes) Watch(s *registry.WatchService) error {
 }
 
 func (p *routes) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
+	var (
+		c           clients.Client
+		callOptions []clients.CallOption
+		err         error
+	)
 	serviceNode, ok := p.GetServiceNode(msg.GetService(), msg.String())
 	if !ok {
-		// TODO warn Log
+		c, callOptions, err = local.NewClient()
+	} else {
+		c, callOptions, err = client.New(serviceNode)
 	}
-
-	c, err := client.New(serviceNode)
 	if err != nil {
 		return nil, err
 	}
-	// TODO Options
-	return c.Call(ctx, msg)
+	return c.Call(ctx, msg, callOptions...)
+}
+
+func (p *routes) Stream(server.Trellis_StreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
 }

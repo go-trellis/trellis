@@ -20,6 +20,18 @@ func (p *Node) Get(key string) (interface{}, bool) {
 	return value, ok
 }
 
+// Copy node
+func (p *Node) Copy() *Node {
+	if p == nil {
+		return nil
+	}
+	nd := &Node{
+		Metadata: p.Metadata,
+		BaseNode: BaseNode{},
+	}
+	return nd
+}
+
 // Set kv pair from metadata
 func (p *Node) Set(key string, value interface{}) {
 	if p.Metadata == nil {

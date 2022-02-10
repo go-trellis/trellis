@@ -10,6 +10,8 @@ import (
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/server"
 
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -27,7 +29,7 @@ type Client struct {
 	dialOptions []grpc.DialOption
 }
 
-func (p *Client) Call(ctx context.Context, in *message.Request) (resp *message.Response, err error) {
+func (p *Client) Call(ctx context.Context, in *message.Request, opts ...clients.CallOption) (resp *message.Response, err error) {
 
 	var (
 		cc *grpc.ClientConn
@@ -53,10 +55,15 @@ func (p *Client) Call(ctx context.Context, in *message.Request) (resp *message.R
 		defer cc.Close()
 	}
 
+	options := clients.CallOptions{}
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	//ctx=> calloptions
 	//ctx = new context
 
-	return server.NewTrellisClient(cc).Call(ctx, in)
+	return server.NewTrellisClient(cc).Call(ctx, in, options.GrpcCallOptions...)
 }
 
 func NewClient(nd *node.Node) (c *Client, err error) {
@@ -99,6 +106,13 @@ func NewClient(nd *node.Node) (c *Client, err error) {
 		client.dialOptions = append(client.dialOptions, grpc.WithTransportCredentials(credentials.NewTLS(tlsCfg)))
 	} else {
 		client.dialOptions = append(client.dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	if opentracing.IsGlobalTracerRegistered() {
+		client.dialOptions = append(client.dialOptions, grpc.WithUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer(), otgrpc.LogPayloads())))
+		client.dialOptions = append(client.dialOptions, grpc.WithStreamInterceptor(
+			otgrpc.OpenTracingStreamClientInterceptor(opentracing.GlobalTracer(), otgrpc.LogPayloads())))
 	}
 
 	if metadata.ClientConfig.GrpcPool != nil && metadata.ClientConfig.GrpcPool.Enable {

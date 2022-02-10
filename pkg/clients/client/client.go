@@ -48,10 +48,9 @@ func evictCallback() cache.EvictCallback {
 	}
 }
 
-func New(nd *node.Node) (clients.Client, error) {
-
+func New(nd *node.Node) (clients.Client, []clients.CallOption, error) {
 	if nd == nil {
-		return local.NewClient()
+		return nil, nil, errcode.New("nil node")
 	}
 	switch nd.GetProtocol() {
 	case node.Protocol_LOCAL:
@@ -65,18 +64,19 @@ func New(nd *node.Node) (clients.Client, error) {
 		if !ok {
 			c, err = grpc.NewClient(nd)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		} else {
 			c, ok = ci.(*grpc.Client)
 			if !ok {
-				return nil, errcode.Newf("client is not grpc client: %s", reflect.TypeOf(ci).String())
+				return nil, nil, errcode.Newf("client is not grpc client: %s", reflect.TypeOf(ci).String())
 			}
 		}
 		if c.Pool != nil {
 			setClient(nd.BaseNode.String(), c)
 		}
-		return c, nil
+		// todo call options
+		return c, nil, nil
 	case node.Protocol_HTTP:
 		var (
 			c   *http.Client
@@ -86,22 +86,22 @@ func New(nd *node.Node) (clients.Client, error) {
 		if ok {
 			c, ok = ci.(*http.Client)
 			if !ok {
-				return nil, errcode.Newf("client is not http client: %s", reflect.TypeOf(ci).String())
+				return nil, nil, errcode.Newf("client is not http client: %s", reflect.TypeOf(ci).String())
 			}
-			return c, nil
+			return c, nil, nil
 		} else {
 			c, err = http.NewClient(nd)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 		setClient(nd.BaseNode.String(), c)
-		return c, nil
+		return c, nil, nil
 		//case node.Protocol_QUIC:
 		//	return quic.NewClient(n)
 	}
 
-	return nil, errcode.Newf("not supported node protocol: %d, %s",
+	return nil, nil, errcode.Newf("not supported node protocol: %d, %s",
 		nd.GetProtocol(), nd.GetProtocol().String())
 }
 

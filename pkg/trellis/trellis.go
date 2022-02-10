@@ -10,10 +10,13 @@ import (
 )
 
 type ServerConfig struct {
-	Type int32 `yaml:"type" json:"type"`
+	ServerName string `yaml:"server_name" json:"server_name"`
+	ServerType int    `yaml:"server_type" json:"server_type"`
 
 	HTTPServerConfig HTTPServerConfig `yaml:"http_server_config" json:"http_server_config"`
 	GrpcServerConfig GrpcServerConfig `yaml:"grpc_server_config" json:"grpc_server_config"`
+
+	TracingConfig TracingConfig `yaml:"tracing_config" json:"tracing_config"`
 
 	RouterConfig router.Config `yaml:"router_config" json:"router_config"`
 }
@@ -24,10 +27,8 @@ func (cfg *ServerConfig) ParseFlags(f *flag.FlagSet) {
 
 // ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
 func (cfg *ServerConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
-	var serverType int
-	f.IntVar(&serverType, prefix+"server.type", 0, "")
-	cfg.Type = int32(serverType)
-	//
+	f.IntVar(&cfg.ServerType, prefix+"server.type", 0, "")
+
 	//f.StringVar(&cfg.Address, prefix+"server.address", ":8000", "")
 	//f.BoolVar(&cfg.EnableTLS, prefix+"server.enable_tls", false, "")
 	//cfg.TLSConfig.ParseFlagsWithPrefix(prefix, f)
@@ -41,6 +42,8 @@ type GrpcServerConfig struct {
 	KeepaliveTimeout  time.Duration `yaml:"keepalive_timeout" json:"keepalive_timeout"`
 	ConnectionTimeout time.Duration `yaml:"connection_timeout" json:"connection_timeout"`
 	NumStreamWorkers  uint32        `yaml:"num_stream_workers" json:"num_stream_workers"`
+
+	Tracing bool `yaml:"tracing" json:"tracing"`
 
 	Address   string     `yaml:"address" json:"address"`
 	EnableTLS bool       `yaml:"enable_tls" json:"enable_tls"`
@@ -56,6 +59,7 @@ func (cfg *GrpcServerConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet
 	f.DurationVar(&cfg.KeepaliveTime, prefix+"grpc.keepalive_time", 0, "")
 	f.DurationVar(&cfg.KeepaliveTimeout, prefix+"grpc.keepalive_timeout", time.Second, "")
 	f.DurationVar(&cfg.ConnectionTimeout, prefix+"grpc.connection_timeout", 0, "")
+	f.BoolVar(&cfg.Tracing, prefix+"grpc.tracing", false, "")
 
 	var streamWorkers uint64
 	f.Uint64Var(&streamWorkers, prefix+"grpc.num_stream_workers", 0, "")
@@ -70,9 +74,11 @@ type HTTPServerConfig struct {
 	Handlers []*HTTPHandler `yaml:"handlers" json:"handlers"`
 	Groups   []*HTTPGroup   `yaml:"groups" json:"groups"`
 
-	Address   string     `yaml:"address" json:"address"`
-	EnableTLS bool       `yaml:"enable_tls" json:"enable_tls"`
-	TLSConfig tls.Config `yaml:",inline" json:",inline"`
+	Address          string        `yaml:"address" json:"address"`
+	DisableKeepAlive bool          `yaml:"disable_keep_alive" json:"disable_keep_alive"`
+	IdleTimeout      time.Duration `yaml:"idle_timeout" json:"idle_timeout"`
+	EnableTLS        bool          `yaml:"enable_tls" json:"enable_tls"`
+	TLSConfig        tls.Config    `yaml:",inline" json:",inline"`
 }
 
 type HTTPHandler struct {
@@ -94,6 +100,12 @@ func (cfg *HTTPServerConfig) ParseFlags(f *flag.FlagSet) {
 // ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
 func (cfg *HTTPServerConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	f.StringVar(&cfg.Address, prefix+"http.address", ":8000", "")
+	f.DurationVar(&cfg.IdleTimeout, prefix+"http.idle_timeout", time.Minute, "")
+	f.BoolVar(&cfg.DisableKeepAlive, prefix+"http.disable_keep_alive", true, "")
 	f.BoolVar(&cfg.EnableTLS, prefix+"http.enable_tls", false, "")
 	cfg.TLSConfig.ParseFlagsWithPrefix(prefix+"http.", f)
+}
+
+type TracingConfig struct {
+	Enable bool `yaml:"enable" json:"enable"`
 }

@@ -37,9 +37,7 @@ func (p *direct) NodeFor(keys ...string) (*Node, bool) {
 	if p.node == nil {
 		return nil, false
 	}
-	node := *p.node
-
-	return &node, true
+	return p.node.Copy(), true
 }
 
 func (p *direct) Remove() {

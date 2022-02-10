@@ -1,24 +1,18 @@
 package grpc
 
 import (
-	"context"
 	"log"
 	"net"
 	"net/http"
 
 	"trellis.tech/trellis.v1/pkg/component"
-
-	"google.golang.org/grpc/peer"
-
-	"github.com/google/uuid"
-	"trellis.tech/trellis.v1/pkg/mime"
-
-	"trellis.tech/trellis.v1/pkg/clients/client"
-	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/trellis"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	otgrpc "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
@@ -27,46 +21,46 @@ import (
 var _ server.Server = (*Server)(nil)
 
 type Server struct {
+	name string
+
 	conf *trellis.GrpcServerConfig
 
 	rpcServer *grpc.Server
 
 	router router.Router
+
+	tracing bool
 }
 
-func (p *Server) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
+func (p *Server) Start() error {
 
-	serviceNode, ok := p.router.GetServiceNode(msg.GetService(), msg.String())
-	if !ok {
-		// TODO warn Log
-	}
-
-	c, err := client.New(serviceNode)
+	listen, err := net.Listen("tcp", p.conf.Address)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if msg.GetPayload().GetHeader() == nil {
-		msg.GetPayload().Header = map[string]string{}
-	}
+	go func() {
+		err := p.rpcServer.Serve(listen)
 
-	ip, _ := peer.FromContext(ctx)
-
-	if ip != nil {
-		if msg.GetPayload().Header[mime.HeaderKeyClientIP] == "" {
-			msg.GetPayload().Header[mime.HeaderKeyClientIP] = ip.Addr.String()
+		if err != nil {
+			if err != http.ErrServerClosed {
+				log.Fatalln(err)
+			}
 		}
-		msg.GetPayload().Header[mime.HeaderKeyRequestIP] = ip.Addr.String()
+	}()
+	return nil
+}
+
+func (p *Server) Stop() error {
+	if err := component.StopComponents(); err != nil {
+		// TODO log
 	}
-
-	msg.GetPayload().Header[mime.HeaderKeyRequestID] = uuid.NewString()
-
-	if msg.GetPayload().GetHeader()[mime.HeaderKeyTraceID] == "" {
-		msg.GetPayload().Header[mime.HeaderKeyTraceID] = uuid.NewString()
+	//p.compManager.
+	if err := p.router.Stop(); err != nil {
+		// TODO log
 	}
-
-	msg.GetPayload().Set(mime.HeaderKeyRequestID, uuid.NewString())
-	return c.Call(ctx, msg)
+	p.rpcServer.Stop()
+	return nil
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -101,43 +95,22 @@ func NewServer(opts ...Option) (*Server, error) {
 		sopts = append(sopts, grpc.Creds(credentials.NewTLS(tls)))
 	}
 
+	if s.tracing {
+		sopts = append(sopts, grpc_middleware.WithUnaryServerChain(
+			otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer(), otgrpc.LogPayloads()),
+		))
+
+		sopts = append(sopts, grpc_middleware.WithStreamServerChain(
+			otgrpc.OpenTracingStreamServerInterceptor(opentracing.GlobalTracer(), otgrpc.LogPayloads()),
+		))
+	}
+
 	s.rpcServer = grpc.NewServer(sopts...)
 
 	if err := s.router.Start(); err != nil {
 		return nil, err
 	}
 
-	server.RegisterTrellisServer(s.rpcServer, s)
+	server.RegisterTrellisServer(s.rpcServer, s.router)
 	return s, nil
-}
-
-func (p *Server) Start() error {
-
-	listen, err := net.Listen("tcp", p.conf.Address)
-	if err != nil {
-		return err
-	}
-
-	go func() {
-		err := p.rpcServer.Serve(listen)
-
-		if err != nil {
-			if err != http.ErrServerClosed {
-				log.Fatalln(err)
-			}
-		}
-	}()
-	return nil
-}
-
-func (p *Server) Stop() error {
-	if err := component.StopComponents(); err != nil {
-		// TODO log
-	}
-	//p.compManager.
-	if err := p.router.Stop(); err != nil {
-		// TODO log
-	}
-	p.rpcServer.Stop()
-	return nil
 }

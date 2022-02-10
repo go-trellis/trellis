@@ -105,20 +105,19 @@ func (p *random) updateRings() {
 	for _, v := range p.nodes {
 
 		for i := 0; i < int(v.Weight); i++ {
-			ring := *v
+			ring := v.Copy()
 			ring.Number = uint32(i + 1)
-			p.rings[p.count] = &ring
-
+			p.rings[p.count] = ring
 			p.count++
 		}
 	}
 }
 
 func (p *random) PrintNodes() {
-	p.RLock()
-	defer p.RUnlock()
+	p.Lock()
+	defer p.Unlock()
 
 	for i, v := range p.nodes {
-		fmt.Println("nodes:", i, *v)
+		fmt.Println("nodes:", i, v.Copy())
 	}
 }

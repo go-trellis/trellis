@@ -23,5 +23,5 @@ func init() {
 }
 
 func main() {
-	cmd.New()
+	cmd.Run()
 }

@@ -13,6 +13,8 @@ import (
 	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/server/grpc"
+	"trellis.tech/trellis.v1/pkg/server/http"
+	"trellis.tech/trellis.v1/pkg/tracing"
 	"trellis.tech/trellis.v1/pkg/trellis"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -67,10 +69,15 @@ func Run() {
 		fmt.Fprintln(flag.CommandLine.Output(), "Run with -help to get list of available parameters")
 	}
 
+	tracingCloser, err := tracing.InitTracer(cfg.ServerName, &cfg.TracingConfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error init tracer %s: %v\n", configFile, err)
+		os.Exit(1)
+	}
+
 	var (
 		svr server.Server
 		r   router.Router
-		err error
 	)
 
 	r, err = router.NewRouter(cfg.RouterConfig)
@@ -79,19 +86,44 @@ func Run() {
 		os.Exit(1)
 	}
 
-	switch t := server.Type_name[cfg.Type]; t {
+	switch t := server.Type_name[int32(cfg.ServerType)]; t {
+	case "All":
+		svr, err = http.NewServer(
+			http.ServerName(cfg.ServerName),
+			http.Config(&cfg.HTTPServerConfig),
+			http.Router(r),
+			http.Tracing(cfg.TracingConfig.Enable))
+		if err != nil {
+			os.Exit(1)
+		}
+		svr, err = grpc.NewServer(
+			grpc.ServerName(cfg.ServerName),
+			grpc.Config(&cfg.GrpcServerConfig),
+			grpc.Router(r),
+			grpc.Tracing(cfg.TracingConfig.Enable))
+		if err != nil {
+			os.Exit(1)
+		}
 	case "HTTP":
-		svr, err = NewHTTPServer(&cfg.HTTPServerConfig, r)
+		svr, err = http.NewServer(
+			http.ServerName(cfg.ServerName),
+			http.Config(&cfg.HTTPServerConfig),
+			http.Router(r),
+			http.Tracing(cfg.TracingConfig.Enable))
 		if err != nil {
 			os.Exit(1)
 		}
 	case "GRPC":
-		svr, err = grpc.NewServer(grpc.Config(&cfg.GrpcServerConfig), grpc.Router(r))
+		svr, err = grpc.NewServer(
+			grpc.ServerName(cfg.ServerName),
+			grpc.Config(&cfg.GrpcServerConfig),
+			grpc.Router(r),
+			grpc.Tracing(cfg.TracingConfig.Enable))
 		if err != nil {
 			os.Exit(1)
 		}
 	default:
-		fmt.Fprintf(os.Stderr, "error server type %d\n", cfg.Type)
+		fmt.Fprintf(os.Stderr, "error server type %d\n", cfg.ServerType)
 		os.Exit(1)
 	}
 
@@ -103,6 +135,13 @@ func Run() {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Kill, os.Interrupt, syscall.SIGQUIT)
 	<-ch
+
+	if tracingCloser != nil {
+		err = tracingCloser.Close()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed close tracing closer: %v\n", err)
+		}
+	}
 
 	if err := svr.Stop(); err != nil {
 		fmt.Fprintf(os.Stderr, "error stop server: %v\n", err)

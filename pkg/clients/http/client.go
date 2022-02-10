@@ -25,7 +25,7 @@ type Client struct {
 	urlP *url.URL
 }
 
-func (p *Client) Call(ctx context.Context, in *message.Request) (*message.Response, error) {
+func (p *Client) Call(ctx context.Context, in *message.Request, _ ...clients.CallOption) (*message.Response, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
