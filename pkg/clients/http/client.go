@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -42,7 +43,10 @@ func (p *Client) Call(ctx context.Context, in *message.Request, _ ...clients.Cal
 	if err != nil {
 		return nil, err
 	}
-	defer hResp.Body.Close()
+	defer func() {
+		io.Copy(ioutil.Discard, hResp.Body)
+		hResp.Body.Close()
+	}()
 
 	body, err := ioutil.ReadAll(hResp.Body)
 	if err != nil {

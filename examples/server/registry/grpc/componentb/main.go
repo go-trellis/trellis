@@ -35,8 +35,8 @@ func main() {
 			RegisterType:   registry.RegisterType_etcd,
 			RegisterPrefix: "/trellis",
 			RegisterServices: registry.RegisterServices{
-				RegisterServiceNodes: []*service.ServiceNode{
-					&service.ServiceNode{
+				RegisterServiceNodes: []*service.Node{
+					&service.Node{
 						Service: service.NewService("trellis", "componentb", "v1"),
 						Node: &node.Node{
 							BaseNode: node.BaseNode{

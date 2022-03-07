@@ -18,6 +18,6 @@ service Trellis {
     rpc Call(message.Request) returns (message.Response) {};
     // Stream is a bidirectional stream
     rpc Stream(stream message.Request) returns (stream message.Response) {};
-    //    // Publish publishes a payload and returns an empty payload
-    //    rpc Publish(message.Payload) returns (message.Payload) {};
+    // Publish publishes a payload and returns an empty payload
+    rpc Publish(message.Request) returns (message.Response) {};
 }

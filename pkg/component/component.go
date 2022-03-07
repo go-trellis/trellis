@@ -32,6 +32,6 @@ type Config struct {
 	Service *service.Service `yaml:"service" json:"service"`
 	Options config.Options   `yaml:"options" json:"options"`
 
-	TrellisServer server.TrellisServer `yaml:"-" json:"-"`
-	Logger        logger.Logger        `yaml:"-" json:"-"`
+	Caller server.Caller `yaml:"-" json:"-"`
+	Logger logger.Logger `yaml:"-" json:"-"`
 }

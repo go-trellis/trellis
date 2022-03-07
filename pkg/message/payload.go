@@ -3,57 +3,64 @@ package message
 import (
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/mime"
-
 	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/json"
 )
 
-func (x *Payload) ContentType() string {
-	header := x.GetHeader()
+func (m *Payload) ContentType() string {
+	header := m.GetHeader()
 	if header == nil {
 		return ""
 	}
 	return header["Content-Type"]
 }
 
-func (x *Payload) ToObject(model interface{}) error {
-	c, err := x.getCodec()
+func (m *Payload) ToObject(model interface{}) error {
+	c, err := m.getCodec()
 	if err != nil {
 		return err
 	}
-
-	return c.Unmarshal(x.GetBody(), model)
+	return c.Unmarshal(m.GetBody(), model)
 }
 
-func (x *Payload) Set(k, v string) {
-	if x.Header == nil {
-		x.Header = make(map[string]string)
+func (m *Payload) Set(k, v string) {
+	if m.Header == nil {
+		m.Header = make(map[string]string)
 	}
-	x.Header[k] = v
+	m.Header[k] = v
 }
 
-func (x *Payload) Get(k string) string {
-	if x == nil {
+func (m *Payload) Get(k string) string {
+	if m == nil {
 		return ""
 	}
-	if x.Header == nil {
+	if m.Header == nil {
 		return ""
 	}
-	return x.Header[k]
+	return m.Header[k]
 }
 
-func (x *Payload) SetBody(model interface{}) (err error) {
-	c, err := x.getCodec()
-	if err != nil {
-		return err
+func (m *Payload) SetBody(model interface{}) error {
+	switch t := model.(type) {
+	case []byte:
+		m.Body = t
+		return nil
+	default:
+		c, err := m.getCodec()
+		if err != nil {
+			return err
+		}
+
+		m.Body, err = c.Marshal(model)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-
-	x.Body, err = c.Marshal(model)
-	return err
 }
 
-func (x *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
-	header := x.GetHeader()
+func (m *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
+	header := m.GetHeader()
 	if header == nil {
 		return nil, errcode.New("nil header")
 	}
@@ -70,9 +77,8 @@ func (x *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
 	return info, nil
 }
 
-func (x *Payload) getCodec() (codec.Codec, error) {
-
-	ct := x.ContentType()
+func (m *Payload) getCodec() (codec.Codec, error) {
+	ct := m.ContentType()
 	c := codec.Select(ct)
 	if c == nil {
 		return nil, errcode.Newf("not supported content-type: %q", ct)

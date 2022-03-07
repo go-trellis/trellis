@@ -32,17 +32,25 @@ func (m *Service) FullPath() string {
 	return filepath.Join(m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()))
 }
 
+func (m *Service) TopicPath() string {
+	if m == nil {
+		return ""
+	}
+	m.Domain = checkDomain(m.GetDomain())
+	return filepath.Join(m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()), ReplaceURL(m.GetTopic()))
+}
+
 func (m *Service) GetPath(registry string) string {
 	m.Domain = checkDomain(m.GetDomain())
 	return filepath.Join(registry, m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()))
 }
 
-type ServiceNode struct {
+type Node struct {
 	Service *Service
 	Node    *node.Node
 }
 
-func (m *ServiceNode) RegisteredServiceNode(registry string) string {
+func (m *Node) RegisteredServiceNode(registry string) string {
 	m.Service.Domain = checkDomain(m.Service.GetDomain())
 	return filepath.Join(registry, m.Service.GetDomain(),
 		ReplaceURL(m.Service.GetName()),

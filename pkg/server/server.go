@@ -1,13 +1,23 @@
 package server
 
 import (
+	"context"
+
 	routing "github.com/go-trellis/fasthttp-routing"
 	"trellis.tech/trellis.v1/pkg/lifecycle"
+	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis/common.v1/errcode"
 )
 
 type Server interface {
 	lifecycle.LifeCycle
+}
+
+type Caller interface {
+	// Call allows a single request to be made
+	Call(context.Context, *message.Request) (*message.Response, error)
+	// Publish publishes a payload and returns an empty payload
+	Publish(context.Context, *message.Request) error
 }
 
 var uses = make(map[string]routing.Handler)

@@ -7,7 +7,7 @@ import (
 )
 
 type worker struct {
-	service *service.ServiceNode
+	service *service.Node
 
 	fullServiceName string
 	fullRegPath     string

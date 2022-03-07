@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -16,7 +15,6 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
 
-	routing "github.com/go-trellis/fasthttp-routing"
 	"trellis.tech/trellis/common.v1/config"
 )
 
@@ -49,16 +47,11 @@ func main() {
 		panic(err)
 	}
 
-	s.RegisterHandler(&http.Handler{
-		Method: "POST",
-		Path:   "/v1",
-		Uses: []routing.Handler{
-			func(*routing.Context) error {
-				fmt.Println("I am an use handler")
-				return nil
-			},
-		},
-		Handler: s.HandleHTTP,
+	s.RegisterHandlers(&trellis.HTTPHandler{
+		Method:  "POST",
+		Path:    "/v1",
+		Uses:    []string{"use1"},
+		Handler: "",
 	})
 
 	if err := s.Start(); err != nil {

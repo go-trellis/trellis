@@ -26,13 +26,13 @@ type Registry interface {
 
 // ProcessService Process register service
 type ProcessService interface {
-	Register(*service.ServiceNode) error
-	Deregister(*service.ServiceNode) error
+	Register(*service.Node) error
+	Deregister(*service.Node) error
 	Watch(*service.Service) (Watcher, error)
 }
 
 type RegisterServices struct {
-	RegisterServiceNodes []*service.ServiceNode `yaml:"register_service_nodes" json:"register_service_nodes"`
+	RegisterServiceNodes []*service.Node `yaml:"register_service_nodes" json:"register_service_nodes"`
 }
 
 type Config struct {

@@ -42,6 +42,7 @@ type RespComponentA struct {
 }
 
 func (p *ComponentA) Route(topic string, msg *message.Payload) (interface{}, error) {
+	fmt.Println("topic", *msg)
 	req := ReqComponentA{}
 	err := msg.ToObject(&req)
 	if err != nil {
@@ -80,7 +81,8 @@ func (p *ComponentA) Route(topic string, msg *message.Payload) (interface{}, err
 		//}, message.Code(401)), nil
 
 		return &message.Response{
-			Code: 401,
+			Code:   401,
+			ErrMsg: "not found topic",
 			Payload: &message.Payload{
 				Header: map[string]string{"message": fmt.Sprintf("Hello: %s", req.Name)},
 				Body:   []byte("say hello"),

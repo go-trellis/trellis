@@ -1,14 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	routing "github.com/go-trellis/fasthttp-routing"
 	_ "trellis.tech/trellis.v1/examples/components"
 	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/component"
@@ -63,7 +61,6 @@ func main() {
 				},
 			},
 			ETCDConfig: etcd.Config{
-
 				//Endpoints: []string{"127.0.0.1:2379"},
 				//DialTimeout types.Duration   `yaml:"dial_timeout" json:"dial_timeout"`
 				MaxRetries: 10,
@@ -90,21 +87,11 @@ func main() {
 		panic(err)
 	}
 
-	s.RegisterHandler(&http.Handler{
-		Method: "POST",
-		Path:   "/v1",
-		Uses: []routing.Handler{
-			func(*routing.Context) error {
-				fmt.Println("I am an use handler")
-				return nil
-			},
-			//func(ctx *routing.Context) error {
-			//
-			//	fmt.Println("I am an error use handler")
-			//	return routing.NewHTTPError(404, `{"code": 404}`)
-			//},
-		},
-		Handler: s.HandleHTTP,
+	s.RegisterHandlers(&trellis.HTTPHandler{
+		Method:  "POST",
+		Path:    "/v1",
+		Uses:    []string{"use1"},
+		Handler: "",
 	})
 
 	if err := s.Start(); err != nil {

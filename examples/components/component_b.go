@@ -41,6 +41,7 @@ type RespComponentB struct {
 }
 
 func (p *ComponentB) Route(topic string, msg *message.Payload) (interface{}, error) {
+	fmt.Println("topic", *msg)
 	fmt.Println(msg.GetTraceInfo())
 	srv := p.conf.Options["server"]
 	req := ReqComponentB{}

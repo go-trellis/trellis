@@ -1,10 +1,31 @@
 package http
 
 import (
+	"fmt"
+
+	routing "github.com/go-trellis/fasthttp-routing"
 	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/server"
+	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
+	"trellis.tech/trellis/common.v1/errcode"
 )
+
+type Handler struct {
+	Method  string
+	Path    string
+	Uses    []routing.Handler
+	Handler routing.Handler
+	Service *service.Service
+}
+
+func (p *Handler) fullpath() string {
+	return queryFullpath(p.Path, p.Method)
+}
+
+func queryFullpath(url, method string) string {
+	return fmt.Sprintf("%s:%s", url, method)
+}
 
 type Option func(*Server)
 
@@ -36,24 +57,63 @@ func Tracing(fs ...bool) Option {
 	}
 }
 
-func getHTTPGroupHandlers(group *trellis.HTTPGroup) ([]*Handler, error) {
-
-	var hs []*Handler
-	for _, hCfg := range group.Handlers {
-		h, err := getHTTPHandler(hCfg)
-		if err != nil {
-			return nil, err
-		}
-		hs = append(hs, h)
-	}
-
-	return hs, nil
+func (p *Server) RegisterGroupHandlers(cfgs ...*trellis.HTTPGroup) error {
+	return p.registerGroupHandlers(p.fastRouter, cfgs...)
 }
 
-func getHTTPHandler(handler *trellis.HTTPHandler) (*Handler, error) {
+func (p *Server) registerGroupHandlers(router *routing.Router, cfgs ...*trellis.HTTPGroup) error {
+	for _, cfg := range cfgs {
+		group := router.Group(cfg.Path)
+
+		var groupUses []routing.Handler
+		for _, use := range cfg.Uses {
+			uFunc, err := server.GetUseFunc(use)
+			if err != nil {
+				return err
+			}
+			groupUses = append(groupUses, uFunc)
+		}
+
+		for _, hCfg := range cfg.Handlers {
+			handler, err := p.getHTTPHandler(hCfg, groupUses)
+			if err != nil {
+				return err
+			}
+			group.To(handler.Method, handler.Path, append(handler.Uses, handler.Handler)...)
+
+			p.services[cfg.Path+handler.fullpath()] = handler.Service
+		}
+	}
+
+	return nil
+}
+
+func (p *Server) RegisterHandlers(cfgs ...*trellis.HTTPHandler) error {
+	return p.registerHandlers(p.fastRouter, cfgs...)
+}
+
+func (p *Server) registerHandlers(router *routing.Router, cfgs ...*trellis.HTTPHandler) error {
+	for _, cfg := range cfgs {
+		handler, err := p.getHTTPHandler(cfg, nil)
+		if err != nil {
+			return err
+		}
+
+		router.To(handler.Method, handler.Path, append(handler.Uses, handler.Handler)...)
+		p.services[handler.fullpath()] = handler.Service
+	}
+	return nil
+}
+
+func (p *Server) getHTTPHandler(handler *trellis.HTTPHandler, groupUses []routing.Handler) (*Handler, error) {
+	if handler.Service == nil {
+		return nil, errcode.Newf("not set service to handler : %s", handler.Path)
+	}
 	h := &Handler{
-		Method: handler.Method,
-		Path:   handler.Path,
+		Method:  handler.Method,
+		Path:    handler.Path,
+		Uses:    groupUses,
+		Service: handler.Service,
 	}
 
 	for _, use := range handler.Uses {
@@ -69,7 +129,10 @@ func getHTTPHandler(handler *trellis.HTTPHandler) (*Handler, error) {
 		if err != nil {
 			return nil, err
 		}
-		h.Uses = append(h.Uses, uFunc)
+		h.Handler = uFunc
+	} else {
+		h.Handler = p.HandleHTTP
 	}
+
 	return h, nil
 }

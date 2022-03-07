@@ -4,6 +4,8 @@ import (
 	"flag"
 	"time"
 
+	"trellis.tech/trellis.v1/pkg/service"
+
 	"trellis.tech/trellis.v1/pkg/router"
 
 	"trellis.tech/trellis/common.v1/crypto/tls"
@@ -71,6 +73,12 @@ func (cfg *GrpcServerConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet
 }
 
 type HTTPServerConfig struct {
+	Protocol string `yaml:"protocol" json:"protocol"`
+
+	HTTP2Config HTTP2Config `yaml:",inline" json:",inline"`
+
+	IsGateway bool `yaml:"is_gateway" json:"is_gateway"`
+
 	Handlers []*HTTPHandler `yaml:"handlers" json:"handlers"`
 	Groups   []*HTTPGroup   `yaml:"groups" json:"groups"`
 
@@ -81,15 +89,38 @@ type HTTPServerConfig struct {
 	TLSConfig        tls.Config    `yaml:",inline" json:",inline"`
 }
 
+type HTTP2Config struct {
+	// PingInterval is the interval at which the server will send a
+	// ping message to a client.
+	//
+	// To disable pings set the PingInterval to a negative value.
+	PingInterval time.Duration `yaml:"ping_interval" json:"ping_interval"`
+
+	// ...
+	MaxConcurrentStreams int `yaml:"max_concurrent_streams" json:"max_concurrent_streams"`
+
+	// Debug is a flag that will allow the library to print debugging information.
+	Debug bool `yaml:"debug" json:"debug"`
+}
+
+// ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
+func (cfg *HTTP2Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
+	f.DurationVar(&cfg.PingInterval, prefix+"ping_interval", 0, "http2 ping interval")
+	f.IntVar(&cfg.MaxConcurrentStreams, prefix+"max_concurrent_streams", 0, "http2 max_concurrent_streams")
+	f.BoolVar(&cfg.Debug, prefix+"debug", false, "")
+}
+
 type HTTPHandler struct {
-	Method  string   `yaml:"method" json:"method"`
-	Path    string   `yaml:"path" json:"path"`
-	Uses    []string `yaml:"uses" json:"uses"`
-	Handler string   `yaml:"handler" json:"handler"`
+	Method  string           `yaml:"method" json:"method"`
+	Path    string           `yaml:"path" json:"path"`
+	Uses    []string         `yaml:"uses" json:"uses"`
+	Handler string           `yaml:"handler" json:"handler"`
+	Service *service.Service `yaml:"service" json:"service"`
 }
 
 type HTTPGroup struct {
 	Path     string         `yaml:"path" json:"path"`
+	Uses     []string       `yaml:"uses" json:"uses"`
 	Handlers []*HTTPHandler `yaml:"handlers" json:"handlers"`
 }
 
@@ -99,11 +130,13 @@ func (cfg *HTTPServerConfig) ParseFlags(f *flag.FlagSet) {
 
 // ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
 func (cfg *HTTPServerConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
+	f.StringVar(&cfg.Protocol, prefix+"http.protocol", "http1", "http2")
 	f.StringVar(&cfg.Address, prefix+"http.address", ":8000", "")
 	f.DurationVar(&cfg.IdleTimeout, prefix+"http.idle_timeout", time.Minute, "")
 	f.BoolVar(&cfg.DisableKeepAlive, prefix+"http.disable_keep_alive", true, "")
 	f.BoolVar(&cfg.EnableTLS, prefix+"http.enable_tls", false, "")
 	cfg.TLSConfig.ParseFlagsWithPrefix(prefix+"http.", f)
+	cfg.HTTP2Config.ParseFlagsWithPrefix(prefix+"http2.", f)
 }
 
 type TracingConfig struct {

@@ -2,6 +2,8 @@ package router
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"sync"
 
 	"trellis.tech/trellis.v1/pkg/clients"
@@ -15,10 +17,10 @@ import (
 	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"trellis.tech/trellis/common.v1/logger"
 )
+
+var _ server.TrellisServer = (*routes)(nil)
 
 type routes struct {
 	conf Config
@@ -76,6 +78,9 @@ func (p *routes) Stop() error {
 
 func (p *routes) GetServiceNode(s *service.Service, keys ...string) (*node.Node, bool) {
 	servicePath := s.FullPath()
+	if servicePath == "" {
+		return nil, false
+	}
 	p.managerLocker.RLock()
 	manager, ok := p.nodeManagers[servicePath]
 	p.managerLocker.RUnlock()
@@ -87,11 +92,11 @@ func (p *routes) GetServiceNode(s *service.Service, keys ...string) (*node.Node,
 	return n, ok
 }
 
-func (p *routes) Register(s *service.ServiceNode) error {
+func (p *routes) Register(s *service.Node) error {
 	return p.Registry.Register(s)
 }
 
-func (p *routes) Deregister(s *service.ServiceNode) error {
+func (p *routes) Deregister(s *service.Node) error {
 	return p.Registry.Deregister(s)
 }
 
@@ -159,6 +164,30 @@ func (p *routes) Call(ctx context.Context, msg *message.Request) (*message.Respo
 	return c.Call(ctx, msg, callOptions...)
 }
 
-func (p *routes) Stream(server.Trellis_StreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
+func (p *routes) Stream(stream server.Trellis_StreamServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.Send(message.NewResponse(nil))
+		}
+		if err != nil {
+			return err
+		}
+		resp, err := p.Call(context.Background(), req)
+		if err != nil {
+			return err
+		}
+		stream.Send(resp)
+	}
+	return nil
+}
+
+func (p *routes) Publish(ctx context.Context, req *message.Request) error {
+	go func() {
+		if _, err := p.Call(ctx, req); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}()
+	return nil
 }

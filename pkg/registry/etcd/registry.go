@@ -94,7 +94,7 @@ func (p *etcdRegistry) String() string {
 	return registry.RegisterType_etcd.String()
 }
 
-func (p *etcdRegistry) Register(s *service.ServiceNode) error {
+func (p *etcdRegistry) Register(s *service.Node) error {
 	if s.Service == nil || s.Service.GetName() == "" {
 		return errcode.New("service name not found")
 	}
@@ -277,7 +277,7 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 }
 
 //
-func (p *etcdRegistry) Deregister(s *service.ServiceNode) error {
+func (p *etcdRegistry) Deregister(s *service.Node) error {
 	if s.Service.GetName() == "" {
 		return errcode.New("service name not found")
 	}
@@ -344,18 +344,18 @@ func (p *etcdRegistry) Watch(s *service.Service) (registry.Watcher, error) {
 	return newEtcdWatcher(cli, p, s)
 }
 
-func encode(nn *service.ServiceNode) string {
+func encode(nn *service.Node) string {
 	bs, _ := json.Marshal(nn)
 	return base64.Encode(base64.EncodeStd, bs)
 }
 
-func decode(bs []byte) *service.ServiceNode {
+func decode(bs []byte) *service.Node {
 	dst, err := base64.Decode(base64.EncodeStd, bs)
 	if err != nil {
 		return nil
 	}
 
-	var s *service.ServiceNode
+	var s *service.Node
 	if err := json.Unmarshal(dst, &s); err != nil {
 		return nil
 	}

@@ -3,25 +3,42 @@ server_name: trellis
 address: 0.0.0.0:8000
 
 http_server_config:
+  is_gateway: true
   groups:
-    - path: /v1
+    - path: "/v1/group"
+      uses: [ "use1" ]
       handlers:
-        -
-          method: POST
-          path: ""
-          uses: ["use1"]
+        - method: POST
+          path: "/haha"
+          uses: []
+          handler: ""
+          service:
+            domain: "/trellis"
+            name: "componentb"
+            version: "v1"
+            topic: ""
   handlers:
     - method: POST
       path: "/v1"
       uses: [ "use1" ]
-      handler: ""
+      handler: "" ## default http.Server.HandleHTTP
+      service:
+        domain: "/trellis"
+        name: "componenta"
+        version: "v1"
+        topic: ""
 
 router_config:
   registry_config:
     prefix: /trellis
   components:
-    -
-      service:
+    - service:
+        domain: trellis
+        name: componenta
+        version: v1
+      options:
+        server: haha
+    - service:
         domain: trellis
         name: componentb
         version: v1

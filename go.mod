@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.2 // indirect
+	github.com/dgrr/http2 v0.3.4
 	github.com/go-trellis/fasthttp-routing v0.0.0-20211209034309-e6134b3454c4
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0

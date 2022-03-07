@@ -60,9 +60,6 @@ func (p *Client) Call(ctx context.Context, in *message.Request, opts ...clients.
 		opt(&options)
 	}
 
-	//ctx=> calloptions
-	//ctx = new context
-
 	return server.NewTrellisClient(cc).Call(ctx, in, options.GrpcCallOptions...)
 }
 

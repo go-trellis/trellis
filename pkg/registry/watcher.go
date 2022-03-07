@@ -25,7 +25,7 @@ type Result struct {
 	// Timestamp is event timestamp
 	Timestamp time.Time
 	// ServiceNode is registered service node
-	ServiceNode *service.ServiceNode
+	ServiceNode *service.Node
 }
 
 type WatchService struct {

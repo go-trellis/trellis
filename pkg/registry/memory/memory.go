@@ -24,7 +24,7 @@ type memory struct {
 	prefix string
 
 	// map[service_name]map[service_node_value]*registry.Service
-	services map[string]map[string]*service.ServiceNode
+	services map[string]map[string]*service.Node
 	watchers map[string]*Watcher
 }
 
@@ -42,7 +42,7 @@ func NewRegistry(l logger.Logger, opts ...registry.Option) (registry.Registry, e
 		prefix: options.Prefix,
 
 		// domain/service version
-		services: make(map[string]map[string]*service.ServiceNode),
+		services: make(map[string]map[string]*service.Node),
 		watchers: make(map[string]*Watcher),
 	}
 
@@ -54,13 +54,13 @@ func (p *memory) Start() error {
 	return nil
 }
 
-func (p *memory) Register(s *service.ServiceNode) error {
+func (p *memory) Register(s *service.Node) error {
 	p.Lock()
 	defer p.Unlock()
 	serviceName := s.Service.GetPath(p.prefix)
 	nodes, ok := p.services[serviceName]
 	if !ok || nodes == nil {
-		nodes = make(map[string]*service.ServiceNode)
+		nodes = make(map[string]*service.Node)
 	}
 
 	nodeID := service.ReplaceURL(s.Node.GetValue())
@@ -77,7 +77,7 @@ func (p *memory) Register(s *service.ServiceNode) error {
 	return nil
 }
 
-func (p *memory) Deregister(s *service.ServiceNode) error {
+func (p *memory) Deregister(s *service.Node) error {
 	p.Lock()
 	defer p.Unlock()
 	serviceName := s.Service.GetPath(p.prefix)

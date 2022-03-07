@@ -16,13 +16,13 @@ import (
 type Router interface {
 	lifecycle.LifeCycle
 
-	Register(s *service.ServiceNode) error
-	Deregister(s *service.ServiceNode) error
+	Register(s *service.Node) error
+	Deregister(s *service.Node) error
 	Watch(s *registry.WatchService) error
 
 	GetServiceNode(s *service.Service, keys ...string) (*node.Node, bool)
 
-	server.TrellisServer
+	server.Caller
 }
 
 type Config struct {
@@ -43,8 +43,8 @@ func NewRouter(c Config) (Router, error) {
 	}
 
 	for _, compCfg := range c.Components {
-		if compCfg.TrellisServer == nil {
-			compCfg.TrellisServer = r
+		if compCfg.Caller == nil {
+			compCfg.Caller = r
 		}
 
 		if err := component.NewComponent(compCfg); err != nil {

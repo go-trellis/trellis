@@ -17,6 +17,7 @@ func init() {
 
 	jsonCodec, _ := NewCodec(mime.ContentTypeJson)
 	defaultCodecs[mime.ContentTypeJson] = jsonCodec
+	defaultCodecs[mime.ContentTypeJsonBom] = jsonCodec
 }
 
 type Codec interface {
