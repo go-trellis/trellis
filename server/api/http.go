@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"trellis.tech/trellis/common.v1/transaction"
+
 	"github.com/gin-gonic/gin"
 	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/txorm"
@@ -151,11 +153,11 @@ func (p *httpServer) init() error {
 
 		databaseConf := apisConf.GetValuesConfig(typ)
 
-		engines, err := txorm.NewEnginesFromConfig(databaseConf)
+		engines, err := txorm.NewXORMEngines(databaseConf)
 		if err != nil {
 			return err
 		}
-		p.apiEngine = engines[txorm.DefaultDatabase]
+		p.apiEngine = engines[transaction.DefaultDatabase]
 
 		ticker := types.ParseStringTime(apisConf.GetString("ticker", "30s"))
 
