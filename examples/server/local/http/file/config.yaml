@@ -1,4 +1,4 @@
-server_type: 1 # http server
+server_type: 2 # http_server server
 server_name: trellis
 address: 0.0.0.0:8000
 
@@ -10,7 +10,7 @@ http_server_config:
       handlers:
         - method: POST
           path: "/haha"
-          uses: []
+          uses: [ ]
           handler: ""
           service:
             domain: "/trellis"
@@ -21,12 +21,12 @@ http_server_config:
     - method: POST
       path: "/v1"
       uses: [ "use1" ]
-      handler: "" ## default http.Server.HandleHTTP
+      handler: "" ## default http_server.Server.HandleHTTP
       service:
         domain: "/trellis"
         name: "componenta"
         version: "v1"
-        topic: ""
+        topic: "grpc"
 
 router_config:
   registry_config:

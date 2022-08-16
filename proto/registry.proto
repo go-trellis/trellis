@@ -1,30 +1,27 @@
 syntax = "proto3";
 
-package service;
+
+package registry;
 
 option go_package = "trellis.tech/trellis.v1/pkg/registry;registry";
 
-// import "trellis.tech/trellis.v1/proto/service.proto";
-// import "trellis.tech/trellis.v1/proto/node.proto";
+import "trellis.tech/trellis.v1/proto/service.proto";
+import "trellis.tech/trellis.v1/proto/node.proto";
 
 enum RegisterType {
-    memory = 0;
-    etcd   = 1;
+    REGISTER_TYPE_MEMORY = 0;
+    REGISTER_TYPE_ETCD = 1;
 }
 
-// message RegisterServices {
-//     // @gotags: yaml:"register_service_nodes,omitempty"
-//     repeated service.ServiceNode register_service_nodes = 1;
-// }
-//
-// message WatchServices {
-//    // @gotags: yaml:"watch_services,omitempty"
-//    repeated WatchService watch_services = 1;
-//}
-//
-// message WatchService {
-//    // @gotags: yaml:"service,omitempty"
-//    service.Service service = 1;
-//    // @gotags: yaml:"node_type"
-//    node.NodeType node_type = 2;
-//}
+message Result {
+    string id = 1;
+    service.Service service = 2;
+    service.EventType event_type = 3;
+    ServiceNode service_node = 4;
+    int64 timestamp = 5;
+}
+
+message ServiceNode {
+    service.Service service = 1;
+    node.Node node = 2;
+}

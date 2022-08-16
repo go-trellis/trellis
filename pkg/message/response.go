@@ -1,3 +1,17 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package message
 
 import (
@@ -40,7 +54,7 @@ func NewResponse(data interface{}, opts ...Option) *Response {
 	}
 
 	if options.Err != nil {
-		resp.ErrMsg = options.Err.Error()
+		resp.Msg = options.Err.Error()
 	}
 
 	if data == nil {
@@ -57,7 +71,7 @@ func NewResponse(data interface{}, opts ...Option) *Response {
 	bs, err := json.Marshal(respData)
 	if err != nil {
 		resp.Code = 500
-		resp.ErrMsg = err.Error()
+		resp.Msg = err.Error()
 		return resp
 	}
 	resp.Payload.Header[mime.HeaderKeyContentType] = mime.ContentTypeJson

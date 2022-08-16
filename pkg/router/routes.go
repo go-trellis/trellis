@@ -1,12 +1,24 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package router
 
 import (
 	"context"
 	"fmt"
-	"io"
 	"sync"
 
-	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/clients/client"
 	"trellis.tech/trellis.v1/pkg/clients/local"
 	"trellis.tech/trellis.v1/pkg/message"
@@ -17,10 +29,9 @@ import (
 	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
 
+	"trellis.tech/trellis/common.v1/json"
 	"trellis.tech/trellis/common.v1/logger"
 )
-
-var _ server.TrellisServer = (*routes)(nil)
 
 type routes struct {
 	conf Config
@@ -41,12 +52,12 @@ func (p *routes) Start() (err error) {
 		registry.RetryTimes(p.conf.RegistryConfig.RetryTimes),
 	}
 	switch p.conf.RegistryConfig.RegisterType {
-	case registry.RegisterType_etcd:
+	case registry.RegisterType_REGISTER_TYPE_ETCD:
 		p.Registry, err = etcd.NewRegistry(
-			p.Logger.With("registry", registry.RegisterType_etcd.String()),
+			p.Logger.With("registry", registry.RegisterType_REGISTER_TYPE_ETCD.String()),
 			options...,
 		)
-	case registry.RegisterType_memory:
+	case registry.RegisterType_REGISTER_TYPE_MEMORY:
 		fallthrough
 	default:
 		p.Registry, err = memory.NewRegistry(
@@ -83,6 +94,7 @@ func (p *routes) GetServiceNode(s *service.Service, keys ...string) (*node.Node,
 	}
 	p.managerLocker.RLock()
 	manager, ok := p.nodeManagers[servicePath]
+	fmt.Println("GetServiceNode", servicePath, ok)
 	p.managerLocker.RUnlock()
 	if !ok {
 		return nil, false
@@ -92,11 +104,11 @@ func (p *routes) GetServiceNode(s *service.Service, keys ...string) (*node.Node,
 	return n, ok
 }
 
-func (p *routes) Register(s *service.Node) error {
+func (p *routes) Register(s *registry.ServiceNode) error {
 	return p.Registry.Register(s)
 }
 
-func (p *routes) Deregister(s *service.Node) error {
+func (p *routes) Deregister(s *registry.ServiceNode) error {
 	return p.Registry.Deregister(s)
 }
 
@@ -127,16 +139,17 @@ func (p *routes) Watch(s *registry.WatchService) error {
 			}
 
 			if s.Metadata != nil {
-				r.ServiceNode.Node.Set("watch_service_config", s.Metadata)
+				bs, _ := json.Marshal(s.Metadata)
+				r.ServiceNode.Node.Set("watch_service_config", string(bs))
 			}
 
-			switch r.Type {
-			case service.EventType_create, service.EventType_update:
+			switch r.GetEventType() {
+			case service.EventType_EVENT_TYPE_CREATE, service.EventType_EVENT_TYPE_UPDATE:
 				p.Logger.Debug("watch_service", "add_service_node", r.ServiceNode)
 				manager.Add(r.ServiceNode.Node)
-			case service.EventType_delete:
+			case service.EventType_EVENT_TYPE_DELETE:
 				p.Logger.Debug("watch_service", "delete_service_node", r.ServiceNode)
-				manager.RemoveByValue(r.ServiceNode.Node.GetValue())
+				manager.RemoveByValue(r.ServiceNode.Node.Value)
 			}
 			p.managerLocker.RLock()
 			p.nodeManagers[servicePath] = manager
@@ -146,48 +159,60 @@ func (p *routes) Watch(s *registry.WatchService) error {
 	return nil
 }
 
+func (p *routes) GetCaller(s *service.Service, keys ...string) (server.Caller, []server.CallOption, error) {
+	var (
+		c    server.Caller
+		opts []server.CallOption
+		err  error
+	)
+	serviceNode, ok := p.GetServiceNode(s, s.String())
+	if !ok {
+		c, opts, err = local.NewClient()
+	} else {
+		c, opts, err = client.New(serviceNode)
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+	return c, opts, nil
+}
+
 func (p *routes) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
 	var (
-		c           clients.Client
-		callOptions []clients.CallOption
-		err         error
+		c    server.Caller
+		opts []server.CallOption
+		err  error
 	)
+
+	fmt.Println("ss.......", msg.GetService())
 	serviceNode, ok := p.GetServiceNode(msg.GetService(), msg.String())
+	fmt.Println("serviceNode.......", serviceNode)
 	if !ok {
-		c, callOptions, err = local.NewClient()
+		c, opts, err = local.NewClient()
 	} else {
-		c, callOptions, err = client.New(serviceNode)
+		c, opts, err = client.New(serviceNode)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return c.Call(ctx, msg, callOptions...)
+	return c.Call(ctx, msg, opts...)
 }
 
-func (p *routes) Stream(stream server.Trellis_StreamServer) error {
-	for {
-		req, err := stream.Recv()
-		if err == io.EOF {
-			return stream.Send(message.NewResponse(nil))
-		}
-		if err != nil {
-			return err
-		}
-		resp, err := p.Call(context.Background(), req)
-		if err != nil {
-			return err
-		}
-		stream.Send(resp)
-	}
-	return nil
-}
-
-func (p *routes) Publish(ctx context.Context, req *message.Request) error {
-	go func() {
-		if _, err := p.Call(ctx, req); err != nil {
-			fmt.Println(err)
-			return
-		}
-	}()
-	return nil
-}
+//
+//func (p *routes) Call(ctx context.Context, msg *message.Request) (*message.Response, error) {
+//	var (
+//		c    server.Caller
+//		opts []server.CallOption
+//		err  error
+//	)
+//	serviceNode, ok := p.GetServiceNode(msg.GetService(), msg.String())
+//	if !ok {
+//		c, opts, err = local.NewClient()
+//	} else {
+//		c, opts, err = client.New(serviceNode)
+//	}
+//	if err != nil {
+//		return nil, err
+//	}
+//	return c.Call(ctx, msg, opts...)
+//}

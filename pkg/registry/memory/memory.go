@@ -1,3 +1,17 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package memory
 
 import (
@@ -24,7 +38,7 @@ type memory struct {
 	prefix string
 
 	// map[service_name]map[service_node_value]*registry.Service
-	services map[string]map[string]*service.Node
+	services map[string]map[string]*registry.ServiceNode
 	watchers map[string]*Watcher
 }
 
@@ -42,7 +56,7 @@ func NewRegistry(l logger.Logger, opts ...registry.Option) (registry.Registry, e
 		prefix: options.Prefix,
 
 		// domain/service version
-		services: make(map[string]map[string]*service.Node),
+		services: make(map[string]map[string]*registry.ServiceNode),
 		watchers: make(map[string]*Watcher),
 	}
 
@@ -54,13 +68,13 @@ func (p *memory) Start() error {
 	return nil
 }
 
-func (p *memory) Register(s *service.Node) error {
+func (p *memory) Register(s *registry.ServiceNode) error {
 	p.Lock()
 	defer p.Unlock()
 	serviceName := s.Service.GetPath(p.prefix)
 	nodes, ok := p.services[serviceName]
 	if !ok || nodes == nil {
-		nodes = make(map[string]*service.Node)
+		nodes = make(map[string]*registry.ServiceNode)
 	}
 
 	nodeID := service.ReplaceURL(s.Node.GetValue())
@@ -69,15 +83,15 @@ func (p *memory) Register(s *service.Node) error {
 	p.services[serviceName] = nodes
 
 	go p.sendEvent(&registry.Result{
-		ID:          p.id,
-		Timestamp:   time.Now(),
-		Type:        service.EventType_update,
+		Id:          p.id,
+		Timestamp:   time.Now().UnixNano(),
+		EventType:   service.EventType_EVENT_TYPE_UPDATE,
 		ServiceNode: s})
 
 	return nil
 }
 
-func (p *memory) Deregister(s *service.Node) error {
+func (p *memory) Deregister(s *registry.ServiceNode) error {
 	p.Lock()
 	defer p.Unlock()
 	serviceName := s.Service.GetPath(p.prefix)
@@ -96,9 +110,9 @@ func (p *memory) Deregister(s *service.Node) error {
 	}
 
 	go p.sendEvent(&registry.Result{
-		ID:          p.id,
-		Timestamp:   time.Now(),
-		Type:        service.EventType_delete,
+		Id:          p.id,
+		Timestamp:   time.Now().UnixNano(),
+		EventType:   service.EventType_EVENT_TYPE_DELETE,
 		ServiceNode: s})
 
 	return nil
@@ -134,7 +148,7 @@ func (p *memory) ID() string {
 }
 
 func (p *memory) String() string {
-	return registry.RegisterType_memory.String()
+	return registry.RegisterType_REGISTER_TYPE_MEMORY.String()
 }
 
 func (p *memory) sendEvent(r *registry.Result) {

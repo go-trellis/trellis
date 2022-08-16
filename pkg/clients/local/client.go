@@ -1,29 +1,44 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package local
 
 import (
 	"context"
 
-	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/mime"
+	"trellis.tech/trellis.v1/pkg/server"
+
 	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/json"
 )
 
 var (
-	_ clients.Client = (*Client)(nil)
+	_ server.Caller = (*Client)(nil)
 
 	c = &Client{}
 )
 
 type Client struct{}
 
-func NewClient() (*Client, []clients.CallOption, error) {
+func NewClient() (server.Caller, []server.CallOption, error) {
 	return c, nil, nil
 }
 
-func (*Client) Call(_ context.Context, in *message.Request, _ ...clients.CallOption) (*message.Response, error) {
+func (*Client) Call(_ context.Context, in *message.Request, _ ...server.CallOption) (*message.Response, error) {
 	comp := component.GetComponent(in.GetService())
 	if comp == nil {
 		return nil, errcode.Newf("not found component: %s", in.GetService().FullPath())

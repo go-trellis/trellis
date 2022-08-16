@@ -1,37 +1,67 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	_ "trellis.tech/trellis.v1/examples/components"
 	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
 	"trellis.tech/trellis.v1/pkg/router"
-	"trellis.tech/trellis.v1/pkg/server/http"
+	"trellis.tech/trellis.v1/pkg/server"
+	"trellis.tech/trellis.v1/pkg/server/http_server"
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
+
+	routing "github.com/go-trellis/fasthttp-routing"
+	_ "trellis.tech/trellis.v1/examples/components"
 	"trellis.tech/trellis/common.v1/clients/etcd"
 	"trellis.tech/trellis/common.v1/crypto/tls"
 )
+
+var (
+	use1 routing.Handler = func(*routing.Context) error {
+		fmt.Println("I am an use handler")
+
+		return nil
+	}
+)
+
+func init() {
+	server.RegisterUseFunc("use1", use1)
+}
 
 // TODO example
 func main() {
 
 	r, err := router.NewRouter(router.Config{
 		RegistryConfig: registry.Config{
-			RegisterType:     registry.RegisterType_etcd,
+			RegisterType:     registry.RegisterType_REGISTER_TYPE_ETCD,
 			RegisterPrefix:   "/trellis",
 			RegisterServices: registry.RegisterServices{},
 			WatchServices: []*registry.WatchService{
 				&registry.WatchService{
 					Service:  service.NewService("trellis", "componentb", "v1"),
-					NodeType: node.NodeType_Consistent,
+					NodeType: node.NodeType_NODE_TYPE_CONSISTENT,
 					Metadata: &registry.WatchServiceMetadata{
 						ClientConfig: &clients.Config{
 							GrpcPool: &clients.GrpcPoolConfig{
@@ -79,20 +109,23 @@ func main() {
 		panic(err)
 	}
 
-	s, err := http.NewServer(
-		http.Config(&trellis.HTTPServerConfig{Address: "0.0.0.0:8000"}),
-		http.Router(r),
+	s, err := http_server.NewServer(
+		http_server.Config(&trellis.HTTPServerConfig{Address: "0.0.0.0:8000", IsGateway: true}),
+		http_server.Router(r),
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	s.RegisterHandlers(&trellis.HTTPHandler{
+	if err := s.RegisterHandlers(&trellis.HTTPHandler{
 		Method:  "POST",
 		Path:    "/v1",
 		Uses:    []string{"use1"},
 		Handler: "",
-	})
+		Service: service.NewServiceWithTopic("trellis", "componenta", "v1", "grpc"),
+	}); err != nil {
+		panic(err)
+	}
 
 	if err := s.Start(); err != nil {
 		panic(err)

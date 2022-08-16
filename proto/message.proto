@@ -15,13 +15,13 @@ message Request {
 
 message Response {
     // @gotags: json:"code"
-    int64 code     = 1;
-    string err_msg = 2;
+    int64 code = 1;
+    string msg = 2;
     // Response payload @gotags: json:"payload"
     Payload payload = 3;
 }
 
 message Payload {
     map<string, string> header = 1;
-    bytes body                 = 2;
+    bytes body = 2;
 }

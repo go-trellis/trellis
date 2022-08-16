@@ -4,52 +4,38 @@ package node;
 
 option go_package = "trellis.tech/trellis.v1/pkg/node;node";
 
+
 enum NodeType {
-    Direct     = 0;
-    Random     = 1;
-    Consistent = 2;
-    RoundRobin = 3;
+    NODE_TYPE_DIRECT = 0;
+    NODE_TYPE_RANDOM = 1;
+    NODE_TYPE_CONSISTENT = 2;
+    NODE_TYPE_ROUNDROBIN = 3;
 }
 
 enum Protocol {
     // 本地服务，直接访问
-    LOCAL = 0;
+    PROTOCOL_LOCAL = 0;
     // RPC协议的服务
-    GRPC = 1;
+    PROTOCOL_GRPC = 1;
     // HTTP协议的服务
-    HTTP = 2;
+    PROTOCOL_HTTP = 2;
     // HTTP 3.0协议的服务
-    QUIC = 3;
+    PROTOCOL_QUIC = 3;
 }
 
-// message Node {
-//     // @gotags: yaml:"weight"
-//     uint32 weight = 1;
-//     // @gotags: yaml:"value"
-//     string value = 2;
-//     // @gotags: yaml:"ttl"
-//     uint64 TTL = 3;
-//     // @gotags: yaml:"heartbeat"
-//     uint64 heartbeat = 4;
-//     // @gotags: yaml:"protocol"
-//     Protocol protocol = 5;
-//     // @gotags: yaml:"metadata,omitempty"
-//     map<string, string> metadata = 6;
-//     // @gotags: protobuf:"-" json:"-" yaml:"-"
-//     uint32 Number = 7;
-// }
-
-message BaseNode {
-    // @gotags: yaml:"weight"
+message Node {
+    // @gotags: json:"weight" yaml:"weight"
     uint32 weight = 1;
-    // @gotags: yaml:"value"
+    // @gotags: json:"value" yaml:"value"
     string value = 2;
-    // @gotags: yaml:"ttl"
+    // @gotags: json:"ttl" yaml:"ttl"
     uint64 TTL = 3;
-    // @gotags: yaml:"heartbeat"
+    // @gotags: json:"heartbeat" yaml:"heartbeat"
     uint64 heartbeat = 4;
-    // @gotags: yaml:"protocol"
+    // @gotags: json:"protocol" yaml:"protocol"
     Protocol protocol = 5;
     // @gotags: protobuf:"-" json:"-" yaml:"-"
-    uint32 Number = 6;
+    uint32 number = 6;
+    // @gotags: json:"metadata" yaml:"metadata"
+    map<string, string > metadata = 7;
 }

@@ -1,4 +1,18 @@
-package http
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+package http_server
 
 import (
 	"fmt"
@@ -7,14 +21,15 @@ import (
 	"reflect"
 	"strings"
 
-	"trellis.tech/trellis.v1/pkg/mime"
-	"trellis.tech/trellis.v1/pkg/tracing"
-
+	"trellis.tech/trellis.v1/pkg/clients/client"
+	"trellis.tech/trellis.v1/pkg/clients/local"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/message"
+	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis.v1/pkg/router"
 	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
+	"trellis.tech/trellis.v1/pkg/tracing"
 	"trellis.tech/trellis.v1/pkg/trellis"
 
 	"github.com/dgrr/http2"
@@ -48,7 +63,7 @@ type Server struct {
 
 type Parser interface {
 	ParseRequest(ctx *routing.Context) (*message.Request, error)
-	ParseResponse(ctx *routing.Context, msg *message.Response) error
+	ParseResponse(ctx *routing.Context, req *message.Request, msg *message.Response) error
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -132,10 +147,12 @@ func (p *Server) Start() error {
 func (p *Server) Stop() error {
 	if err := component.StopComponents(); err != nil {
 		// TODO log
+		fmt.Println(err)
 	}
 
 	if err := p.router.Stop(); err != nil {
 		// TODO log
+		fmt.Println(err)
 	}
 
 	if err := p.fastServer.Shutdown(); err != nil {
@@ -159,13 +176,14 @@ func (p *Server) HandleHTTP(ctx *routing.Context) (err error) {
 		ext.Component.Set(span, p.name)
 
 		defer func() {
-
 			headers := http.Header{}
 			ctx.RequestCtx.Request.Header.VisitAllInOrder(p.visitor(headers))
-			opentracing.GlobalTracer().Inject(span.Context(),
+			if dErr := opentracing.GlobalTracer().Inject(span.Context(),
 				opentracing.HTTPHeaders,
 				opentracing.HTTPHeadersCarrier(headers),
-			)
+			); dErr != nil {
+				span.LogFields(opentracingLog.String("handler inject error", dErr.Error()))
+			}
 
 			ext.HTTPStatusCode.Set(span, uint16(ctx.Response.StatusCode()))
 			if err != nil {
@@ -183,20 +201,34 @@ func (p *Server) HandleHTTP(ctx *routing.Context) (err error) {
 		return routing.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	fmt.Println(*req)
+	fmt.Println("*req：", req)
 
 	if req.GetPayload().GetHeader() == nil {
 		req.GetPayload().Header = map[string]string{}
-		req.GetPayload().Header[mime.HeaderKeyTraceID] = tracing.GetTraceID(span)
+	}
+	req.GetPayload().Header[mime.HeaderKeyTraceID] = tracing.GetTraceID(span)
+
+	var (
+		c    server.Caller
+		opts []server.CallOption
+	)
+	serviceNode, ok := p.router.GetServiceNode(req.GetService(), req.String())
+	if !ok {
+		c, opts, err = local.NewClient()
+	} else {
+		c, opts, err = client.New(serviceNode)
+	}
+	if err != nil {
+		return err
 	}
 
-	var resp *message.Response
-	if resp, err = p.router.Call(ctx, req); err != nil {
-		fmt.Println("call server failed", err)
-		return
+	fmt.Println("req...", req)
+	resp, err := c.Call(ctx, req, opts...)
+	if err != nil {
+		return err
 	}
 
-	err = p.parser.ParseResponse(ctx, resp)
+	err = p.parser.ParseResponse(ctx, req, resp)
 
 	return
 }

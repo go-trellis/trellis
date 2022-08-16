@@ -1,3 +1,17 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package components
 
 import (
@@ -41,7 +55,7 @@ type RespComponentB struct {
 }
 
 func (p *ComponentB) Route(topic string, msg *message.Payload) (interface{}, error) {
-	fmt.Println("topic", *msg)
+	fmt.Println("topic", topic, msg)
 	fmt.Println(msg.GetTraceInfo())
 	srv := p.conf.Options["server"]
 	req := ReqComponentB{}

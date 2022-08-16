@@ -1,6 +1,21 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package component
 
 import (
+	"fmt"
 	"sync"
 
 	"trellis.tech/trellis.v1/pkg/service"
@@ -8,14 +23,14 @@ import (
 	"trellis.tech/trellis/common.v1/errcode"
 )
 
-var compR = &compRouter{
+var compR = &compManager{
 	newFuncs:   make(map[string]NewComponentFunc),
 	components: make(map[string]Component),
 }
 
-var _ Router = (*compRouter)(nil)
+var _ Manager = (*compManager)(nil)
 
-type compRouter struct {
+type compManager struct {
 	mu sync.RWMutex
 	// map[service]Component
 	newFuncs map[string]NewComponentFunc
@@ -23,7 +38,7 @@ type compRouter struct {
 	components map[string]Component
 }
 
-func (p *compRouter) RegisterNewComponentFunc(s *service.Service, newFunc NewComponentFunc) error {
+func (p *compManager) RegisterNewComponentFunc(s *service.Service, newFunc NewComponentFunc) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	if newFunc == nil {
@@ -37,7 +52,7 @@ func (p *compRouter) RegisterNewComponentFunc(s *service.Service, newFunc NewCom
 	return nil
 }
 
-func (p *compRouter) RegisterComponent(s *service.Service, comp Component) error {
+func (p *compManager) RegisterComponent(s *service.Service, comp Component) error {
 	if comp == nil {
 		p.mu.Lock()
 		delete(p.components, s.FullPath())
@@ -56,7 +71,7 @@ func (p *compRouter) RegisterComponent(s *service.Service, comp Component) error
 	return comp.Start()
 }
 
-func (p *compRouter) NewComponent(c *Config) error {
+func (p *compManager) NewComponent(c *Config) error {
 	p.mu.RLock()
 	newFunc, ok := p.newFuncs[c.Service.FullPath()]
 	if !ok {
@@ -73,14 +88,15 @@ func (p *compRouter) NewComponent(c *Config) error {
 	return p.RegisterComponent(c.Service, comp)
 }
 
-func (p *compRouter) GetComponent(s *service.Service) Component {
+func (p *compManager) GetComponent(s *service.Service) Component {
 	p.mu.RLock()
+	fmt.Println(s.FullPath())
 	comp := p.components[s.FullPath()]
 	p.mu.RUnlock()
 	return comp
 }
 
-func (p *compRouter) StopComponents() error {
+func (p *compManager) StopComponents() error {
 	p.mu.Lock()
 	p.newFuncs = make(map[string]NewComponentFunc)
 	components := p.components

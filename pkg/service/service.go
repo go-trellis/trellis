@@ -1,20 +1,38 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package service
 
 import (
 	"path/filepath"
 	"strings"
-
-	"trellis.tech/trellis.v1/pkg/node"
 )
 
 const DefaultDomain = "/trellis"
 
 func NewService(domain, name, version string) *Service {
-	domain = checkDomain(domain)
+	domain = CheckDomain(domain)
 	return &Service{Domain: domain, Name: name, Version: version}
 }
 
-func checkDomain(domain string) string {
+func NewServiceWithTopic(domain, name, version, topic string) *Service {
+	s := NewService(domain, name, version)
+	s.Topic = topic
+	return s
+}
+
+func CheckDomain(domain string) string {
 	domain = ReplaceURL(strings.TrimLeft(domain, "/"))
 	if domain == "" {
 		domain = DefaultDomain
@@ -28,7 +46,7 @@ func (m *Service) FullPath() string {
 	if m == nil {
 		return ""
 	}
-	m.Domain = checkDomain(m.GetDomain())
+	m.Domain = CheckDomain(m.GetDomain())
 	return filepath.Join(m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()))
 }
 
@@ -36,26 +54,13 @@ func (m *Service) TopicPath() string {
 	if m == nil {
 		return ""
 	}
-	m.Domain = checkDomain(m.GetDomain())
+	m.Domain = CheckDomain(m.GetDomain())
 	return filepath.Join(m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()), ReplaceURL(m.GetTopic()))
 }
 
 func (m *Service) GetPath(registry string) string {
-	m.Domain = checkDomain(m.GetDomain())
+	m.Domain = CheckDomain(m.GetDomain())
 	return filepath.Join(registry, m.GetDomain(), ReplaceURL(m.GetName()), ReplaceURL(m.GetVersion()))
-}
-
-type Node struct {
-	Service *Service
-	Node    *node.Node
-}
-
-func (m *Node) RegisteredServiceNode(registry string) string {
-	m.Service.Domain = checkDomain(m.Service.GetDomain())
-	return filepath.Join(registry, m.Service.GetDomain(),
-		ReplaceURL(m.Service.GetName()),
-		ReplaceURL(m.Service.GetVersion()),
-		ReplaceURL(m.Node.GetValue()))
 }
 
 // ReplaceURL replace url

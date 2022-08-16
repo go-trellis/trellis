@@ -12,24 +12,39 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package etcd
+package grpc_server
 
 import (
-	"time"
-
-	"trellis.tech/trellis.v1/pkg/registry"
+	"trellis.tech/trellis.v1/pkg/router"
+	"trellis.tech/trellis.v1/pkg/trellis"
 )
 
-type worker struct {
-	node *registry.ServiceNode
+type Option func(*Server)
 
-	fullRegPath string
+func ServerName(name string) Option {
+	return func(server *Server) {
+		server.name = name
+	}
+}
 
-	stopSignal chan bool
+func Config(c *trellis.GrpcServerConfig) Option {
+	return func(server *Server) {
+		server.conf = c
+	}
+}
 
-	// invoke self-register with ticker
-	ticker *time.Ticker
+func Router(r router.Router) Option {
+	return func(server *Server) {
+		server.router = r
+	}
+}
 
-	timeout time.Duration
-	ttl     time.Duration
+func Tracing(fs ...bool) Option {
+	return func(server *Server) {
+		if len(fs) == 0 {
+			server.tracing = true
+			return
+		}
+		server.tracing = fs[0]
+	}
 }

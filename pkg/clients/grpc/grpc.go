@@ -1,10 +1,23 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package grpc
 
 import (
 	"context"
 	"reflect"
 
-	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
@@ -20,7 +33,7 @@ import (
 	"trellis.tech/trellis/common.v1/pool"
 )
 
-var _ clients.Client = (*Client)(nil)
+var _ server.Caller = (*Client)(nil)
 
 type Client struct {
 	nd   *node.Node
@@ -29,7 +42,7 @@ type Client struct {
 	dialOptions []grpc.DialOption
 }
 
-func (p *Client) Call(ctx context.Context, in *message.Request, opts ...clients.CallOption) (resp *message.Response, err error) {
+func (p *Client) Call(ctx context.Context, in *message.Request, opts ...server.CallOption) (resp *message.Response, err error) {
 
 	var (
 		cc *grpc.ClientConn
@@ -45,9 +58,9 @@ func (p *Client) Call(ctx context.Context, in *message.Request, opts ...clients.
 		if !ok {
 			return nil, errcode.New("not found client in pool")
 		}
+		//nolint
 		defer p.Pool.Put(cc)
 	} else {
-
 		cc, err = grpc.Dial(p.nd.Value, p.dialOptions...)
 		if err != nil {
 			return
@@ -55,12 +68,12 @@ func (p *Client) Call(ctx context.Context, in *message.Request, opts ...clients.
 		defer cc.Close()
 	}
 
-	options := clients.CallOptions{}
+	options := server.CallOptions{}
 	for _, opt := range opts {
 		opt(&options)
 	}
 
-	return server.NewTrellisClient(cc).Call(ctx, in, options.GrpcCallOptions...)
+	return server.NewTrellisClient(cc).Call(ctx, in, options.GRPCCallOptions...)
 }
 
 func NewClient(nd *node.Node) (c *Client, err error) {
@@ -79,8 +92,8 @@ func NewClient(nd *node.Node) (c *Client, err error) {
 		return client, nil
 	}
 
-	metadata, ok := watchServiceConfig.(*registry.WatchServiceMetadata)
-	if !ok || metadata.ClientConfig == nil {
+	metadata, err := registry.ToWatchServiceMetadata(watchServiceConfig)
+	if err != nil || metadata.ClientConfig == nil {
 		client.dialOptions = append(client.dialOptions, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		return client, nil
 	}

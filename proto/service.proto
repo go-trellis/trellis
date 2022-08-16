@@ -4,8 +4,14 @@ package service;
 
 option go_package = "trellis.tech/trellis.v1/pkg/service;service";
 
-// import "trellis.tech/trellis.v1/proto/node.proto";
 
+enum EventType {
+    EVENT_TYPE_CREATE = 0;
+    EVENT_TYPE_DELETE = 1;
+    EVENT_TYPE_UPDATE = 2;
+}
+
+// Service 服务对象
 message Service {
     // @gotags: yaml:"domain,omitempty"
     string domain = 1;
@@ -15,17 +21,4 @@ message Service {
     string version = 3;
     // API Handler name  @gotags: yaml:"topic,omitempty"
     string topic = 4;
-}
-
-// message ServiceNode {
-//     // @gotags: yaml:"service,omitempty"
-//     Service service = 1;
-//     // @gotags: yaml:"node"
-//     node.Node node = 2;
-// }
-
-enum EventType {
-    create = 0;
-    delete = 1;
-    update = 2;
 }

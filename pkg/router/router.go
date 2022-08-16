@@ -1,13 +1,27 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package router
 
 import (
 	"flag"
 
+	"trellis.tech/trellis.v1/pkg/clients"
 	"trellis.tech/trellis.v1/pkg/component"
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/node"
 	"trellis.tech/trellis.v1/pkg/registry"
-	"trellis.tech/trellis.v1/pkg/server"
 	"trellis.tech/trellis.v1/pkg/service"
 
 	"trellis.tech/trellis/common.v1/logger"
@@ -16,13 +30,13 @@ import (
 type Router interface {
 	lifecycle.LifeCycle
 
-	Register(s *service.Node) error
-	Deregister(s *service.Node) error
+	clients.Caller
+
+	Register(s *registry.ServiceNode) error
+	Deregister(s *registry.ServiceNode) error
 	Watch(s *registry.WatchService) error
 
 	GetServiceNode(s *service.Service, keys ...string) (*node.Node, bool)
-
-	server.Caller
 }
 
 type Config struct {
@@ -35,18 +49,17 @@ func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	cfg.RegistryConfig.ParseFlagsWithPrefix(prefix+"router.", f)
 }
 
-func NewRouter(c Config) (Router, error) {
+func NewRouter(cfg Config) (Router, error) {
 	r := &routes{
-		conf:         c,
+		conf:         cfg,
 		Logger:       logger.Noop(), // todo logger
 		nodeManagers: make(map[string]node.Manager),
 	}
 
-	for _, compCfg := range c.Components {
+	for _, compCfg := range cfg.Components {
 		if compCfg.Caller == nil {
 			compCfg.Caller = r
 		}
-
 		if err := component.NewComponent(compCfg); err != nil {
 			return nil, err
 		}

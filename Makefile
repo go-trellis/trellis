@@ -1,7 +1,7 @@
 .PHONY: proto build
 
 proto:
-	sh ./scripts/proto.sh
+	sh ./scripts/genproto.sh
 
 build:
 	go build ./...

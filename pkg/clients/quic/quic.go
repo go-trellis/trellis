@@ -1,39 +1,15 @@
-package quic
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
-//import (
-//	"context"
-//	"net/http"
-//
-//	"trellis.tech/trellis.v1/pkg/clients"
-//	"trellis.tech/trellis.v1/pkg/message"
-//	"trellis.tech/trellis.v1/pkg/node"
-//
-//	"github.com/lucas-clemente/quic-go"
-//	"github.com/lucas-clemente/quic-go/http3"
-//)
-//
-//var _ clients.Client = (*Client)(nil)
-//
-//type Client struct {
-//	client *http.Client
-//}
-//
-//func (p *Client) Call(ctx context.Context, in *message.Request, option ...clients.CallOption) (*message.Response, error) {
-//
-//	//p.client.Do()
-//	return nil, nil
-//}
-//
-//func NewClient(n *node.Node) (*Client, error) {
-//	var qconf quic.Config
-//
-//	roundTripper := &http3.RoundTripper{
-//		QuicConfig: &qconf,
-//	}
-//
-//	return &Client{
-//		client: &http.Client{
-//			Transport: roundTripper,
-//		},
-//	}, nil
-//}
+package quic

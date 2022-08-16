@@ -1,3 +1,17 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package message
 
 import (
@@ -7,51 +21,54 @@ import (
 	"trellis.tech/trellis/common.v1/json"
 )
 
-func (m *Payload) ContentType() string {
-	header := m.GetHeader()
+func (x *Payload) ContentType() string {
+	header := x.GetHeader()
 	if header == nil {
 		return ""
 	}
 	return header["Content-Type"]
 }
 
-func (m *Payload) ToObject(model interface{}) error {
-	c, err := m.getCodec()
+func (x *Payload) ToObject(model interface{}) error {
+	if x.GetBody() == nil {
+		return nil
+	}
+	c, err := x.getCodec()
 	if err != nil {
 		return err
 	}
-	return c.Unmarshal(m.GetBody(), model)
+	return c.Unmarshal(x.GetBody(), model)
 }
 
-func (m *Payload) Set(k, v string) {
-	if m.Header == nil {
-		m.Header = make(map[string]string)
+func (x *Payload) Set(k, v string) {
+	if x == nil {
+		x = &Payload{}
 	}
-	m.Header[k] = v
+	if x.Header == nil {
+		x.Header = make(map[string]string)
+	}
+	x.Header[k] = v
 }
 
-func (m *Payload) Get(k string) string {
-	if m == nil {
+func (x *Payload) Get(k string) string {
+	if x == nil || x.Header == nil {
 		return ""
 	}
-	if m.Header == nil {
-		return ""
-	}
-	return m.Header[k]
+	return x.Header[k]
 }
 
-func (m *Payload) SetBody(model interface{}) error {
+func (x *Payload) SetBody(model interface{}) error {
 	switch t := model.(type) {
 	case []byte:
-		m.Body = t
+		x.Body = t
 		return nil
 	default:
-		c, err := m.getCodec()
+		c, err := x.getCodec()
 		if err != nil {
 			return err
 		}
 
-		m.Body, err = c.Marshal(model)
+		x.Body, err = c.Marshal(model)
 		if err != nil {
 			return err
 		}
@@ -59,8 +76,8 @@ func (m *Payload) SetBody(model interface{}) error {
 	}
 }
 
-func (m *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
-	header := m.GetHeader()
+func (x *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
+	header := x.GetHeader()
 	if header == nil {
 		return nil, errcode.New("nil header")
 	}
@@ -77,8 +94,8 @@ func (m *Payload) GetTraceInfo() (*mime.TraceInfo, error) {
 	return info, nil
 }
 
-func (m *Payload) getCodec() (codec.Codec, error) {
-	ct := m.ContentType()
+func (x *Payload) getCodec() (codec.Codec, error) {
+	ct := x.ContentType()
 	c := codec.Select(ct)
 	if c == nil {
 		return nil, errcode.Newf("not supported content-type: %q", ct)

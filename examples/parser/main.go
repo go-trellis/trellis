@@ -12,24 +12,33 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package etcd
+package main
 
 import (
-	"time"
+	"encoding/json"
+	"fmt"
 
-	"trellis.tech/trellis.v1/pkg/registry"
+	"trellis.tech/trellis.v1/examples/components"
+	"trellis.tech/trellis.v1/pkg/server/http_server"
 )
 
-type worker struct {
-	node *registry.ServiceNode
+const data = `{"code":0,"trace_id":"","payload":"eyJtZXNzYWdlIjoiSGVsbG86IEhhaGEsIEkgYW0gY29tcG9uZW50IGI6IGhhaGEifQ=="}`
 
-	fullRegPath string
+func main() {
+	resp := &http_server.GatewayResponse{}
 
-	stopSignal chan bool
+	if err := json.Unmarshal([]byte(data), resp); err != nil {
+		panic(err)
+	}
 
-	// invoke self-register with ticker
-	ticker *time.Ticker
+	payload := &components.RespComponentB{}
 
-	timeout time.Duration
-	ttl     time.Duration
+	if err := json.Unmarshal(resp.Payload, payload); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(payload)
 }
+
+// &{Hello: Haha, I am component b: 0.0.0.0:8001}
+// &{Hello: Haha, I am component b: haha}

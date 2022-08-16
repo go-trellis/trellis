@@ -1,3 +1,17 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package components
 
 import (
@@ -42,56 +56,31 @@ type RespComponentA struct {
 }
 
 func (p *ComponentA) Route(topic string, msg *message.Payload) (interface{}, error) {
-	fmt.Println("topic", *msg)
+	fmt.Println("topic", topic, msg)
+	fmt.Println(msg.GetTraceInfo())
 	req := ReqComponentA{}
 	err := msg.ToObject(&req)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
 	switch topic {
 	case "grpc":
 		fmt.Println("I am test component route, topic: grpc", req)
-		//c, err := grpc.NewClient(&node.Node{Value: "127.0.0.1:8001"})
-		//if err != nil {
-		//	return nil, err
-		//}
-		//return c.Call(context.Background(), &message.Request{
-		//	Service: &service.Service{Domain: "trellis", Name: "componentb", Version: "v1", Topic: "test"},
-		//	Payload: msg})
+		sTopic := service.NewServiceWithTopic("/trellis", "componentb", "v1", "test")
 
-		return p.conf.TrellisServer.Call(context.Background(), &message.Request{
-			Service: &service.Service{Domain: "trellis", Name: "componentb", Version: "v1", Topic: "test"},
-			Payload: msg})
+		return p.conf.Caller.Call(context.Background(), &message.Request{Service: sTopic, Payload: msg})
 	default:
 		fmt.Println("I am test component route, topic: default", req)
 
-		//return nil, nil
-		//return nil, errcode.New("I am response an error")
-		//return &RespComponentA{
-		//	Message: fmt.Sprintf("Hello: %s", req.Name),
-		//}, nil
-		//return &message.Payload{
-		//	Header: map[string]string{"message": fmt.Sprintf("Hello: %s", req.Name)},
-		//	Body:   []byte("say hello"),
-		//}, nil
-
-		//return message.NewResponse(&TestResp{
-		//	Message: fmt.Sprintf("Hello: %s", req.Name),
-		//}, message.Code(401)), nil
-
 		return &message.Response{
-			Code:   401,
-			ErrMsg: "not found topic",
+			Code: 401,
+			Msg:  "not found topic",
 			Payload: &message.Payload{
 				Header: map[string]string{"message": fmt.Sprintf("Hello: %s", req.Name)},
 				Body:   []byte("say hello"),
 			},
 		}, nil
-
-		//return message.NewResponse(&TestResp{
-		//	Message: fmt.Sprintf("Hello: %s", req.Name),
-		//}, message.Code(401), message.Error(errcode.New("I am an error"))), nil
-
 	}
 }

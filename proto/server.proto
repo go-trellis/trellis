@@ -1,23 +1,13 @@
 syntax = "proto3";
 
-package grpc;
+package server;
 
 option go_package = "trellis.tech/trellis.v1/pkg/server;server";
 
-import "trellis.tech/trellis.v1/proto/message.proto";
-
-enum Type {
-    All  = 0;
-    HTTP = 1;
-    GRPC = 2;
-}
-
-// Poster is the micro client interface
-service Trellis {
-    // Call allows a single request to be made
-    rpc Call(message.Request) returns (message.Response) {};
-    // Stream is a bidirectional stream
-    rpc Stream(stream message.Request) returns (stream message.Response) {};
-    // Publish publishes a payload and returns an empty payload
-    rpc Publish(message.Request) returns (message.Response) {};
+enum ServerType {
+    UNSPECIFIED = 0;
+    ALL = 1;
+    HTTP = 2;
+    GRPC = 3;
+    QUIC = 4;
 }

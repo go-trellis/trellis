@@ -1,3 +1,17 @@
+/*
+Copyright © 2022 Henry Huang <hhh@rutcode.com>
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package etcd
 
 import (
@@ -91,12 +105,16 @@ func (p *etcdRegistry) ID() string {
 }
 
 func (p *etcdRegistry) String() string {
-	return registry.RegisterType_etcd.String()
+	return registry.RegisterType_REGISTER_TYPE_ETCD.String()
 }
 
-func (p *etcdRegistry) Register(s *service.Node) error {
-	if s.Service == nil || s.Service.GetName() == "" {
+func (p *etcdRegistry) Register(s *registry.ServiceNode) error {
+	if s.GetService() == nil || s.GetService().GetName() == "" {
 		return errcode.New("service name not found")
+	}
+
+	if s.GetNode() == nil || s.GetNode().GetValue() == "" {
+		return errcode.New("service node's value not found")
 	}
 
 	fullRegPath := s.RegisteredServiceNode(p.options.Prefix)
@@ -108,15 +126,14 @@ func (p *etcdRegistry) Register(s *service.Node) error {
 		return nil
 	}
 
-	heartbeat := time.Duration(s.Node.GetHeartbeat())
+	heartbeat := time.Duration(s.GetNode().GetHeartbeat())
 	if heartbeat <= 0 {
 		heartbeat = defaultHeartbeat
 	}
 
-	ttl := time.Duration(s.Node.GetTTL())
-
+	ttl := time.Duration(s.GetNode().GetTTL())
 	wer := &worker{
-		service:     s,
+		node:        s,
 		ticker:      time.NewTicker(heartbeat),
 		fullRegPath: fullRegPath,
 		stopSignal:  make(chan bool, 1),
@@ -133,6 +150,7 @@ func (p *etcdRegistry) Register(s *service.Node) error {
 	go func(wr *worker) {
 		var count int
 		for {
+			fmt.Println(fullRegPath, *wr)
 			if err := p.registerServiceNode(wr); err != nil {
 				p.Logger.Warn("failed_and_retry_register", "worker", wr, "error", err.Error(),
 					"retry_times", count, "max_retry_times", p.options.RetryTimes)
@@ -154,6 +172,7 @@ func (p *etcdRegistry) Register(s *service.Node) error {
 				return
 			case <-wr.ticker.C:
 				// nothing to do
+				// TODO heartbeat
 			}
 		}
 	}(wer)
@@ -166,8 +185,8 @@ func (p *etcdRegistry) Register(s *service.Node) error {
 }
 
 func (p *etcdRegistry) registerServiceNode(wr *worker) error {
-	if wr == nil || wr.service == nil || wr.service.Service.GetName() == "" ||
-		wr.service.Node == nil || wr.service.Node.GetValue() == "" {
+	if wr == nil || wr.node == nil || wr.node.GetService().GetName() == "" ||
+		wr.node.GetNode() == nil || wr.node.Node.Value == "" {
 		return errcode.New("node should not be nil")
 	}
 
@@ -175,7 +194,7 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 	leaseID, ok := p.leases[wr.fullRegPath]
 	p.RUnlock()
 
-	p.Logger.Debug("register_service_node", "result", ok, "service", wr.service)
+	p.Logger.Debug("register_service_node", "result", ok, "service", wr.node)
 
 	if !ok {
 		// minimum lease TTL is ttl-second
@@ -224,7 +243,7 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 	}
 
 	// create hash of service; uint64
-	h, err := hashstructure.Hash(wr.service, hashstructure.FormatV2, nil)
+	h, err := hashstructure.Hash(wr.node, hashstructure.FormatV2, nil)
 	if err != nil {
 		return err
 	}
@@ -258,9 +277,9 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 		putOpts = append(putOpts, clientv3.WithLease(lgr.ID))
 	}
 
-	p.Logger.Debug("put_service_into_etcd", "path", wr.fullRegPath, "service", wr.service)
+	p.Logger.Debug("put_service_into_etcd", "path", wr.fullRegPath, "service", wr.node)
 
-	if _, err = p.client.Put(ctx, wr.fullRegPath, encode(wr.service), putOpts...); err != nil {
+	if _, err = p.client.Put(ctx, wr.fullRegPath, encode(wr.node), putOpts...); err != nil {
 		return err
 	}
 
@@ -277,7 +296,7 @@ func (p *etcdRegistry) registerServiceNode(wr *worker) error {
 }
 
 //
-func (p *etcdRegistry) Deregister(s *service.Node) error {
+func (p *etcdRegistry) Deregister(s *registry.ServiceNode) error {
 	if s.Service.GetName() == "" {
 		return errcode.New("service name not found")
 	}
@@ -344,19 +363,19 @@ func (p *etcdRegistry) Watch(s *service.Service) (registry.Watcher, error) {
 	return newEtcdWatcher(cli, p, s)
 }
 
-func encode(nn *service.Node) string {
+func encode(nn *registry.ServiceNode) string {
 	bs, _ := json.Marshal(nn)
 	return base64.Encode(base64.EncodeStd, bs)
 }
 
-func decode(bs []byte) *service.Node {
+func decode(bs []byte) *registry.ServiceNode {
 	dst, err := base64.Decode(base64.EncodeStd, bs)
 	if err != nil {
 		return nil
 	}
 
-	var s *service.Node
-	if err := json.Unmarshal(dst, &s); err != nil {
+	var s *registry.ServiceNode
+	if err = json.Unmarshal(dst, &s); err != nil {
 		return nil
 	}
 	return s
