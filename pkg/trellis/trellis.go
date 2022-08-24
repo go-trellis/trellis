@@ -95,6 +95,7 @@ type HTTPServerConfig struct {
 	Handlers []*HTTPHandler `yaml:"handlers" json:"handlers"`
 	Groups   []*HTTPGroup   `yaml:"groups" json:"groups"`
 
+	RecoverTrace     bool          `yaml:"recover_trace" json:"recover_trace"`
 	Address          string        `yaml:"address" json:"address"`
 	DisableKeepAlive bool          `yaml:"disable_keep_alive" json:"disable_keep_alive"`
 	IdleTimeout      time.Duration `yaml:"idle_timeout" json:"idle_timeout"`
@@ -148,6 +149,7 @@ func (cfg *HTTPServerConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet
 	f.DurationVar(&cfg.IdleTimeout, prefix+"http_server.idle_timeout", time.Minute, "")
 	f.BoolVar(&cfg.DisableKeepAlive, prefix+"http_server.disable_keep_alive", true, "")
 	f.BoolVar(&cfg.EnableTLS, prefix+"http_server.enable_tls", false, "")
+	f.BoolVar(&cfg.RecoverTrace, prefix+"http_server.recover_trace", false, "")
 	cfg.TLSConfig.ParseFlagsWithPrefix(prefix+"http_server.", f)
 	cfg.HTTP2Config.ParseFlagsWithPrefix(prefix+"http2.", f)
 }

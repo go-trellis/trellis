@@ -17,15 +17,14 @@ package main
 import (
 	"fmt"
 
-	"trellis.tech/trellis.v1/pkg/server"
-
-	routing "github.com/go-trellis/fasthttp-routing"
+	"github.com/gofiber/fiber/v2"
 	"trellis.tech/trellis.v1/cmd"
 	_ "trellis.tech/trellis.v1/examples/components"
+	"trellis.tech/trellis.v1/pkg/server"
 )
 
 var (
-	use1 routing.Handler = func(*routing.Context) error {
+	use1 = func(*fiber.Ctx) error {
 		fmt.Println("I am an use handler")
 
 		return nil

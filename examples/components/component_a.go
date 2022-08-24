@@ -58,10 +58,10 @@ type RespComponentA struct {
 func (p *ComponentA) Route(topic string, msg *message.Payload) (interface{}, error) {
 	fmt.Println("topic", topic, msg)
 	fmt.Println(msg.GetTraceInfo())
-	req := ReqComponentA{}
-	err := msg.ToObject(&req)
+	var req *ReqComponentA
+	err := msg.ToObject(req)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 		return nil, err
 	}
 

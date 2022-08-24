@@ -17,7 +17,8 @@ package server
 import (
 	"context"
 
-	routing "github.com/go-trellis/fasthttp-routing"
+	"github.com/gofiber/fiber/v2"
+
 	"google.golang.org/grpc"
 	"trellis.tech/trellis.v1/pkg/lifecycle"
 	"trellis.tech/trellis.v1/pkg/message"
@@ -47,9 +48,9 @@ func GRPCCallOption(opts ...grpc.CallOption) CallOption {
 	}
 }
 
-var uses = make(map[string]routing.Handler)
+var uses = make(map[string]fiber.Handler)
 
-func RegisterUseFunc(name string, rh routing.Handler) {
+func RegisterUseFunc(name string, rh fiber.Handler) {
 	_, ok := uses[name]
 	if ok {
 		panic(errcode.Newf("use function already exist: %s", name))
@@ -57,7 +58,7 @@ func RegisterUseFunc(name string, rh routing.Handler) {
 	uses[name] = rh
 }
 
-func GetUseFunc(name string) (routing.Handler, error) {
+func GetUseFunc(name string) (fiber.Handler, error) {
 	use, ok := uses[name]
 	if !ok {
 		panic(errcode.Newf("not found use function: %s", name))

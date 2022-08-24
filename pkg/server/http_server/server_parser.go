@@ -17,7 +17,8 @@ package http_server
 import (
 	"net/http"
 
-	routing "github.com/go-trellis/fasthttp-routing"
+	"github.com/gofiber/fiber/v2"
+
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/mime"
@@ -30,9 +31,9 @@ func NewServerParser() Parser {
 	return (*ServerParser)(nil)
 }
 
-func (*ServerParser) ParseRequest(ctx *routing.Context) (*message.Request, error) {
+func (*ServerParser) ParseRequest(ctx *fiber.Ctx) (*message.Request, error) {
 
-	ct := string(ctx.Request.Header.ContentType())
+	ct := string(ctx.Request().Header.ContentType())
 	if ct == "" {
 		ct = mime.ContentTypeJson
 	}
@@ -43,9 +44,9 @@ func (*ServerParser) ParseRequest(ctx *routing.Context) (*message.Request, error
 
 	req := &message.Request{}
 
-	body := ctx.Request.Body()
+	body := ctx.Request().Body()
 	if body != nil {
-		if err := c.Unmarshal(ctx.Request.Body(), req); err != nil {
+		if err := c.Unmarshal(ctx.Request().Body(), req); err != nil {
 			return nil, err
 		}
 	}
@@ -57,7 +58,7 @@ func (*ServerParser) ParseRequest(ctx *routing.Context) (*message.Request, error
 		req.GetPayload().Header = map[string]string{}
 	}
 
-	clientIp := ClientIP(ctx.RequestCtx)
+	clientIp := ClientIP(ctx.Context())
 	req.GetPayload().Header[mime.HeaderKeyContentType] = ct
 	if req.GetPayload().Header[mime.HeaderKeyClientIP] == "" {
 		req.GetPayload().Header[mime.HeaderKeyClientIP] = clientIp
@@ -67,11 +68,11 @@ func (*ServerParser) ParseRequest(ctx *routing.Context) (*message.Request, error
 	return req, nil
 }
 
-func (*ServerParser) ParseResponse(ctx *routing.Context, req *message.Request, msg *message.Response) error {
+func (*ServerParser) ParseResponse(ctx *fiber.Ctx, req *message.Request, msg *message.Response) error {
 	return parseResponse(ctx, req, msg)
 }
 
-func parseResponse(ctx *routing.Context, req *message.Request, msg *message.Response) error {
+func parseResponse(ctx *fiber.Ctx, req *message.Request, msg *message.Response) error {
 	ct := ""
 	if msg == nil {
 		msg = &message.Response{}
@@ -93,9 +94,10 @@ func parseResponse(ctx *routing.Context, req *message.Request, msg *message.Resp
 	}
 
 	msg.GetPayload().Set("Content-Type", ct)
-	ctx.SetContentType(ct)
-	ctx.SetStatusCode(http.StatusOK)
-	ctx.SetBody(bs)
+
+	ctx.Set("Content-Type", ct)
+	ctx.Response().SetStatusCode(http.StatusOK)
+	ctx.Response().SetBody(bs)
 
 	return nil
 }

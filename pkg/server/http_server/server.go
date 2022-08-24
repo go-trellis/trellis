@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"reflect"
 	"strings"
 
@@ -33,11 +34,13 @@ import (
 	"trellis.tech/trellis.v1/pkg/trellis"
 
 	"github.com/dgrr/http2"
-	routing "github.com/go-trellis/fasthttp-routing"
+	fiber "github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	opentracingLog "github.com/opentracing/opentracing-go/log"
 	"github.com/valyala/fasthttp"
+	"trellis.tech/trellis/common.v1/logger"
 )
 
 var (
@@ -49,8 +52,8 @@ type Server struct {
 
 	conf *trellis.HTTPServerConfig
 
-	fastServer *fasthttp.Server
-	fastRouter *routing.Router
+	fiberApp    *fiber.App
+	fiberRouter fiber.Router
 
 	router router.Router
 
@@ -59,23 +62,29 @@ type Server struct {
 	tracing bool
 
 	services map[string]*service.Service
+
+	logger logger.Logger
 }
 
 type Parser interface {
-	ParseRequest(ctx *routing.Context) (*message.Request, error)
-	ParseResponse(ctx *routing.Context, req *message.Request, msg *message.Response) error
+	ParseRequest(ctx *fiber.Ctx) (*message.Request, error)
+	ParseResponse(ctx *fiber.Ctx, req *message.Request, msg *message.Response) error
 }
 
 func NewServer(opts ...Option) (*Server, error) {
 	s := &Server{
 		services: map[string]*service.Service{},
 
-		fastRouter: routing.New(),
+		fiberApp: fiber.New(),
 	}
 
 	for _, o := range opts {
 		o(s)
 	}
+
+	s.fiberRouter = s.fiberApp.Use(recover.New(recover.Config{EnableStackTrace: s.conf.RecoverTrace}))
+
+	fmt.Println("p.fiberRouter", s.fiberRouter)
 
 	return s, nil
 }
@@ -88,25 +97,12 @@ func (p *Server) Start() error {
 		}
 	}
 
-	if p.fastRouter == nil {
-		p.fastRouter = routing.New()
-	}
-
-	if err := p.registerGroupHandlers(p.fastRouter, p.conf.Groups...); err != nil {
+	if err := p.registerGroupHandlers(p.conf.Groups...); err != nil {
 		return err
 	}
 
-	if err := p.registerHandlers(p.fastRouter, p.conf.Handlers...); err != nil {
+	if err := p.registerHandlers(p.conf.Handlers...); err != nil {
 		return err
-	}
-
-	fmt.Println(p.services)
-
-	p.fastServer = &fasthttp.Server{
-		Handler:          p.fastRouter.HandleRequest,
-		DisableKeepalive: p.conf.DisableKeepAlive,
-		IdleTimeout:      p.conf.IdleTimeout,
-		CloseOnShutdown:  true,
 	}
 
 	if p.conf.IsGateway {
@@ -125,13 +121,13 @@ func (p *Server) Start() error {
 				MaxConcurrentStreams: p.conf.HTTP2Config.MaxConcurrentStreams,
 				Debug:                p.conf.HTTP2Config.Debug,
 			}
-			http2.ConfigureServer(p.fastServer, serverConfig)
+			http2.ConfigureServer(p.fiberApp.Server(), serverConfig)
 		}
 
 		if p.conf.EnableTLS {
-			err = p.fastServer.ListenAndServeTLS(p.conf.Address, p.conf.TLSConfig.CertPath, p.conf.TLSConfig.KeyPath)
+			err = p.fiberApp.ListenTLS(p.conf.Address, p.conf.TLSConfig.CertPath, p.conf.TLSConfig.KeyPath)
 		} else {
-			err = p.fastServer.ListenAndServe(p.conf.Address)
+			err = p.fiberApp.Listen(p.conf.Address)
 		}
 
 		if err != nil {
@@ -155,7 +151,7 @@ func (p *Server) Stop() error {
 		fmt.Println(err)
 	}
 
-	if err := p.fastServer.Shutdown(); err != nil {
+	if err := p.fiberApp.Shutdown(); err != nil {
 		// TODO log
 		return err
 	}
@@ -163,21 +159,23 @@ func (p *Server) Stop() error {
 	return nil
 }
 
-func (p *Server) HandleHTTP(ctx *routing.Context) (err error) {
+func (p *Server) HandleHTTP(ctx *fiber.Ctx) (err error) {
 	fmt.Println("in........")
 	var span opentracing.Span
 
+	httputil.DumpRequest(ctx.Request().SetURI(""))
+
 	if opentracing.IsGlobalTracerRegistered() {
 
-		span, _ = opentracing.StartSpanFromContext(ctx, p.name)
+		span, _ = opentracing.StartSpanFromContext(ctx.Context(), p.name)
 
-		ext.HTTPUrl.Set(span, ctx.Request.URI().String())
-		ext.HTTPMethod.Set(span, string(ctx.Request.Header.Method()))
+		ext.HTTPUrl.Set(span, ctx.Request().URI().String())
+		ext.HTTPMethod.Set(span, string(ctx.Request().Header.Method()))
 		ext.Component.Set(span, p.name)
 
 		defer func() {
 			headers := http.Header{}
-			ctx.RequestCtx.Request.Header.VisitAllInOrder(p.visitor(headers))
+			ctx.Request().Header.VisitAllInOrder(p.visitor(headers))
 			if dErr := opentracing.GlobalTracer().Inject(span.Context(),
 				opentracing.HTTPHeaders,
 				opentracing.HTTPHeadersCarrier(headers),
@@ -185,7 +183,7 @@ func (p *Server) HandleHTTP(ctx *routing.Context) (err error) {
 				span.LogFields(opentracingLog.String("handler inject error", dErr.Error()))
 			}
 
-			ext.HTTPStatusCode.Set(span, uint16(ctx.Response.StatusCode()))
+			ext.HTTPStatusCode.Set(span, uint16(ctx.Response().StatusCode()))
 			if err != nil {
 				ext.Error.Set(span, true)
 				span.LogFields(opentracingLog.String("handler call error", err.Error()))
@@ -198,7 +196,9 @@ func (p *Server) HandleHTTP(ctx *routing.Context) (err error) {
 
 	var req *message.Request
 	if req, err = p.parser.ParseRequest(ctx); err != nil {
-		return routing.NewHTTPError(http.StatusBadRequest, err.Error())
+		ctx.Response().SetStatusCode(http.StatusBadRequest)
+		ctx.Response().SetBody([]byte(err.Error()))
+		return
 	}
 
 	fmt.Println("*req：", req)
@@ -223,7 +223,7 @@ func (p *Server) HandleHTTP(ctx *routing.Context) (err error) {
 	}
 
 	fmt.Println("req...", req)
-	resp, err := c.Call(ctx, req, opts...)
+	resp, err := c.Call(ctx.Context(), req, opts...)
 	if err != nil {
 		return err
 	}

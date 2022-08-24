@@ -4,20 +4,20 @@ go 1.17
 
 require (
 	github.com/dgrr/http2 v0.3.5
-	github.com/go-trellis/fasthttp-routing v0.0.0-20211209034309-e6134b3454c4
+	github.com/gofiber/fiber/v2 v2.36.0
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.12.2
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
 	github.com/valyala/fasthttp v1.39.0
 	go.etcd.io/etcd/api/v3 v3.5.4
 	go.etcd.io/etcd/client/v3 v3.5.4
 	google.golang.org/grpc v1.48.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.1
 	trellis.tech/trellis/common.v1 v0.0.0-20220728084011-7b0cf282f673
 )
@@ -49,6 +49,7 @@ require (
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fastrand v1.0.0 // indirect
+	github.com/valyala/tcplisten v1.0.0 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.4 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect

@@ -32,17 +32,17 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
 
-	routing "github.com/go-trellis/fasthttp-routing"
+	"github.com/gofiber/fiber/v2"
 	_ "trellis.tech/trellis.v1/examples/components"
 	"trellis.tech/trellis/common.v1/clients/etcd"
 	"trellis.tech/trellis/common.v1/crypto/tls"
 )
 
 var (
-	use1 routing.Handler = func(*routing.Context) error {
+	use1 fiber.Handler = func(ctx *fiber.Ctx) error {
 		fmt.Println("I am an use handler")
 
-		return nil
+		return ctx.Next()
 	}
 )
 
@@ -59,7 +59,7 @@ func main() {
 			RegisterPrefix:   "/trellis",
 			RegisterServices: registry.RegisterServices{},
 			WatchServices: []*registry.WatchService{
-				&registry.WatchService{
+				{
 					Service:  service.NewService("trellis", "componentb", "v1"),
 					NodeType: node.NodeType_NODE_TYPE_CONSISTENT,
 					Metadata: &registry.WatchServiceMetadata{

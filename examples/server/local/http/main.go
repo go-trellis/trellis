@@ -59,7 +59,10 @@ func main() {
 	}
 
 	s, err := http_server.NewServer(
-		http_server.Config(&trellis.HTTPServerConfig{Address: "0.0.0.0:8000"}),
+		http_server.Config(&trellis.HTTPServerConfig{
+			RecoverTrace: true,
+			Address:      "0.0.0.0:8000",
+		}),
 		http_server.Router(r),
 	)
 	if err != nil {

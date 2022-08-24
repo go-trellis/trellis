@@ -19,12 +19,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gofiber/fiber/v2"
+
 	"trellis.tech/trellis.v1/pkg/codec"
 	"trellis.tech/trellis.v1/pkg/message"
 	"trellis.tech/trellis.v1/pkg/mime"
 	"trellis.tech/trellis.v1/pkg/service"
 
-	routing "github.com/go-trellis/fasthttp-routing"
 	"trellis.tech/trellis/common.v1/errcode"
 )
 
@@ -40,12 +41,13 @@ type GatewayResponse struct {
 }
 
 func NewGatewayParser(services map[string]*service.Service) Parser {
+	fmt.Println("gateway services", services)
 	return &GatewayParser{
 		services: services,
 	}
 }
 
-func (p *GatewayParser) ParseRequest(ctx *routing.Context) (*message.Request, error) {
+func (p *GatewayParser) ParseRequest(ctx *fiber.Ctx) (*message.Request, error) {
 
 	req := &message.Request{
 		Payload: &message.Payload{
@@ -53,40 +55,40 @@ func (p *GatewayParser) ParseRequest(ctx *routing.Context) (*message.Request, er
 		},
 	}
 
-	urlPath := string(ctx.URI().Path())
+	urlPath := string(ctx.Request().URI().Path())
 	if req.GetPayload().Header[mime.HeaderKeyRequestURIPath] == "" {
 		req.GetPayload().Header[mime.HeaderKeyRequestURIPath] = urlPath
 	}
 
-	method := string(ctx.Method())
+	method := ctx.Method()
 	if req.GetPayload().Header[mime.HeaderKeyRequestURIMethod] == "" {
 		req.GetPayload().Header[mime.HeaderKeyRequestURIMethod] = method
 	}
 
 	if req.GetPayload().Header[mime.HeaderKeyUserAgent] == "" {
-		req.GetPayload().Header[mime.HeaderKeyUserAgent] = string(ctx.Request.Header.UserAgent())
+		req.GetPayload().Header[mime.HeaderKeyUserAgent] = string(ctx.Request().Header.UserAgent())
 	}
 
 	if req.GetPayload().Header[mime.HeaderKeyRequestURIQuery] == "" {
-		req.GetPayload().Header[mime.HeaderKeyRequestURIQuery] = string(ctx.URI().QueryString())
+		req.GetPayload().Header[mime.HeaderKeyRequestURIQuery] = string(ctx.Request().URI().QueryString())
 	}
-	ct := string(ctx.Request.Header.Peek(mime.HeaderKeyContentType))
+	ct := string(ctx.Request().Header.Peek(mime.HeaderKeyContentType))
 	req.GetPayload().Header[mime.HeaderKeyContentType] = ct
 
-	clientIp := ClientIP(ctx.RequestCtx)
+	clientIp := ClientIP(ctx.Context())
 	if req.GetPayload().Header[mime.HeaderKeyClientIP] == "" {
 		req.GetPayload().Header[mime.HeaderKeyClientIP] = clientIp
 	}
 	req.GetPayload().Header[mime.HeaderKeyRequestIP] = clientIp
 
-	body := ctx.Request.Body()
+	body := ctx.Request().Body()
 	if body != nil {
 		if err := req.GetPayload().SetBody(body); err != nil {
 			return nil, err
 		}
 	}
 
-	fmt.Println(string(body))
+	fmt.Println(urlPath, method)
 
 	reqService, ok := p.services[queryFullpath(urlPath, method)]
 	if !ok {
@@ -97,11 +99,11 @@ func (p *GatewayParser) ParseRequest(ctx *routing.Context) (*message.Request, er
 	return req, nil
 }
 
-func (p *GatewayParser) ParseResponse(ctx *routing.Context, req *message.Request, msg *message.Response) error {
+func (p *GatewayParser) ParseResponse(ctx *fiber.Ctx, req *message.Request, msg *message.Response) error {
 	return parseGatewayResponse(ctx, req, msg)
 }
 
-func parseGatewayResponse(ctx *routing.Context, req *message.Request, msg *message.Response) error {
+func parseGatewayResponse(ctx *fiber.Ctx, req *message.Request, msg *message.Response) error {
 	var ct string
 	if msg != nil {
 		ct = msg.GetPayload().Get(mime.HeaderKeyContentType)
@@ -128,9 +130,8 @@ func parseGatewayResponse(ctx *routing.Context, req *message.Request, msg *messa
 
 	bs, _ := json.Marshal(resp)
 
-	ctx.SetContentType(ct)
-	ctx.SetStatusCode(http.StatusOK)
-	ctx.SetBody(bs)
-
+	ctx.Set("Content-Type", ct)
+	ctx.Response().SetStatusCode(http.StatusOK)
+	ctx.Response().SetBody(bs)
 	return nil
 }

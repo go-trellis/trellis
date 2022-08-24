@@ -22,15 +22,15 @@ import (
 	"trellis.tech/trellis.v1/pkg/service"
 	"trellis.tech/trellis.v1/pkg/trellis"
 
-	routing "github.com/go-trellis/fasthttp-routing"
+	"github.com/gofiber/fiber/v2"
 	"trellis.tech/trellis/common.v1/errcode"
 )
 
 type Handler struct {
 	Method  string
 	Path    string
-	Uses    []routing.Handler
-	Handler routing.Handler
+	Uses    []fiber.Handler
+	Handler fiber.Handler
 	Service *service.Service
 }
 
@@ -73,14 +73,14 @@ func Tracing(fs ...bool) Option {
 }
 
 func (p *Server) RegisterGroupHandlers(cfgs ...*trellis.HTTPGroup) error {
-	return p.registerGroupHandlers(p.fastRouter, cfgs...)
+	return p.registerGroupHandlers(cfgs...)
 }
 
-func (p *Server) registerGroupHandlers(router *routing.Router, cfgs ...*trellis.HTTPGroup) error {
+func (p *Server) registerGroupHandlers(cfgs ...*trellis.HTTPGroup) error {
 	for _, cfg := range cfgs {
-		group := router.Group(cfg.Path)
+		group := p.fiberRouter.Group(cfg.Path)
 
-		var groupUses []routing.Handler
+		var groupUses []fiber.Handler
 		for _, use := range cfg.Uses {
 			uFunc, err := server.GetUseFunc(use)
 			if err != nil {
@@ -94,7 +94,7 @@ func (p *Server) registerGroupHandlers(router *routing.Router, cfgs ...*trellis.
 			if err != nil {
 				return err
 			}
-			group.To(handler.Method, handler.Path, append(handler.Uses, handler.Handler)...)
+			group.Add(handler.Method, handler.Path, append(handler.Uses, handler.Handler)...)
 
 			p.services[cfg.Path+handler.fullpath()] = handler.Service
 		}
@@ -104,30 +104,30 @@ func (p *Server) registerGroupHandlers(router *routing.Router, cfgs ...*trellis.
 }
 
 func (p *Server) RegisterHandlers(cfgs ...*trellis.HTTPHandler) error {
-	return p.registerHandlers(p.fastRouter, cfgs...)
+	return p.registerHandlers(cfgs...)
 }
 
-func (p *Server) registerHandlers(router *routing.Router, cfgs ...*trellis.HTTPHandler) error {
+func (p *Server) registerHandlers(cfgs ...*trellis.HTTPHandler) error {
 	for _, cfg := range cfgs {
 		handler, err := p.getHTTPHandler(cfg, nil)
 		if err != nil {
 			return err
 		}
 
-		router.To(handler.Method, handler.Path, append(handler.Uses, handler.Handler)...)
+		p.fiberRouter.Add(handler.Method, handler.Path, append(handler.Uses, handler.Handler)...)
 		p.services[handler.fullpath()] = handler.Service
 	}
 	return nil
 }
 
-func (p *Server) getHTTPHandler(handler *trellis.HTTPHandler, groupUses []routing.Handler) (*Handler, error) {
+func (p *Server) getHTTPHandler(handler *trellis.HTTPHandler, groupUses []fiber.Handler) (*Handler, error) {
 	if handler.Service == nil {
 		return nil, errcode.Newf("not set service to handler : %s", handler.Path)
 	}
 	h := &Handler{
 		Method:  handler.Method,
 		Path:    handler.Path,
-		Uses:    groupUses,
+		Uses:    append([]fiber.Handler{}, groupUses...),
 		Service: handler.Service,
 	}
 
